@@ -606,6 +606,29 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/create_database_scope_credentials')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Serverless/Security"
+				},
+				"content": {
+					"query": "USE external_db\n-- Create MASTER KEY \nIF NOT EXISTS\n    (SELECT * FROM sys.symmetric_keys\n        WHERE symmetric_key_id = 101)\nBEGIN\n    CREATE MASTER KEY\nEND\nGO\n-- Create Database Scope Credential [Managed Identity]\nIF NOT EXISTS\n    (SELECT * FROM sys.database_scoped_credentials\n         WHERE name = 'SynapseIdentity')\n    CREATE DATABASE SCOPED CREDENTIAL SynapseIdentity\n    WITH IDENTITY = 'Managed Identity'\nGO\nIF NOT EXISTS\n    (SELECT * FROM sys.database_scoped_credentials\n         WHERE name = 'WorkspaceIdentity')\n    CREATE DATABASE SCOPED CREDENTIAL WorkspaceIdentity\n    WITH IDENTITY = 'Managed Identity'\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "external_db",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/create_db_user_template')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -626,6 +649,52 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/create_external_data_source')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Serverless/External Resources"
+				},
+				"content": {
+					"query": "-- DROP EXTERNAL DATA SOURCE INTERIM_Zone\n-- Create External Data Source\nIF NOT EXISTS (SELECT * FROM sys.external_data_sources WHERE name = 'INTERIM_Zone')\n\tCREATE EXTERNAL DATA SOURCE INTERIM_Zone\n\tWITH (  LOCATION   =  'https://mdwdopsstdevimops.dfs.core.windows.net/datalake/data/interim/'\n    ,CREDENTIAL = WorkspaceIdentity )\nGo",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/create_external_file_format')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Serverless/External Resources"
+				},
+				"content": {
+					"query": "-- Create Parquet Format [SynapseParquetFormat]\nIF NOT EXISTS (SELECT * FROM sys.external_file_formats WHERE name = 'SynapseParquetFormat')\n\tCREATE EXTERNAL FILE FORMAT [SynapseParquetFormat]\n\tWITH ( FORMAT_TYPE = parquet)",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "master",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/create_external_table')]",
 			"type": "Microsoft.Synapse/workspaces/sqlscripts",
 			"apiVersion": "2019-06-01-preview",
@@ -640,6 +709,52 @@
 						"name": "master",
 						"type": "SqlOnDemand"
 					}
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/parking_bay_view')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Serverless"
+				},
+				"content": {
+					"query": "-- Create parking_bay View \nIF EXISTS(select * FROM sys.views where name = 'parking_bay_view')\n    DROP VIEW IF EXISTS parking_bay_view;\nGO\nCREATE VIEW parking_bay_view AS\nSELECT * \nFROM OPENROWSET(\n        BULK 'interim.parking_bay/*.parquet',\n        DATA_SOURCE = 'INTERIM_Zone',\n        FORMAT = 'PARQUET'\n    )\nWITH ( \n [bay_id] BIGINT\n,[last_edit] VARCHAR(50)\n,[marker_id] VARCHAR(50)\n,[meter_id] VARCHAR(50)\n,[rd_seg_dsc] VARCHAR(500)\n,[rd_seg_id] VARCHAR(50)\n,[the_geom] VARCHAR(MAX)\n,[load_id] VARCHAR(50)\n,[loaded_on] VARCHAR(50))\nAS [r];\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "external_db",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
+				},
+				"type": "SqlQuery"
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/sensor_view')]",
+			"type": "Microsoft.Synapse/workspaces/sqlscripts",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Serverless"
+				},
+				"content": {
+					"query": "-- Create sensor View \nIF EXISTS(select * FROM sys.views where name = 'sensor_view')\n    DROP VIEW IF EXISTS sensor_view;\nGO\nCREATE VIEW sensor_view AS\nSELECT * \nFROM OPENROWSET(\n        BULK 'interim.sensor/*.parquet',\n        DATA_SOURCE = 'INTERIM_Zone',\n        FORMAT = 'PARQUET'\n    )\nWITH (\n    [bay_id] BIGINT \n    ,[st_marker_id] VARCHAR(100)\n    ,[lat] REAL\n    ,[lon] REAL\n    ,[location] VARCHAR(300)\n    ,[status] VARCHAR(10)\n    ,[load_id] VARCHAR(100)\n    ,[loaded_on] VARCHAR(200)\n)\nAS [r];\nGO",
+					"metadata": {
+						"language": "sql"
+					},
+					"currentConnection": {
+						"databaseName": "external_db",
+						"poolName": "Built-in"
+					},
+					"resultLimit": 5000
 				},
 				"type": "SqlQuery"
 			},
