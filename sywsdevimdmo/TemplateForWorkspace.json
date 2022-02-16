@@ -79,6 +79,18 @@
 		"03_transform_properties_bigDataPool_referenceName": {
 			"type": "string",
 			"defaultValue": "synspdevimdmo"
+		},
+		"configuration_properties_bigDataPool_referenceName": {
+			"type": "string",
+			"defaultValue": "imsparkpool3"
+		},
+		"test_operations_properties_bigDataPool_referenceName": {
+			"type": "string",
+			"defaultValue": "synspdevimdmo"
+		},
+		"utilities_properties_bigDataPool_referenceName": {
+			"type": "string",
+			"defaultValue": "imsparkpool3"
 		}
 	},
 	"variables": {
@@ -87,6 +99,15 @@
 	"resources": [
 		{
 			"name": "[concat(parameters('workspaceName'), '/synspdevimdmo')]",
+			"type": "Microsoft.Synapse/workspaces/bigDataPools",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"annotations": []
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/imsparkpool3')]",
 			"type": "Microsoft.Synapse/workspaces/bigDataPools",
 			"apiVersion": "2019-06-01-preview",
 			"properties": {
@@ -962,6 +983,181 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/00_ingest_raw')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "563076dd-82b6-4952-b415-338707d909e0"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Raw Data Retrieval"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Notebook Objective\n",
+							"\n",
+							"In this notebook we:\n",
+							"\n",
+							"1. Ingest data from a remote source into our source directory, `rawPath`."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Step Configuration\n",
+							"\n",
+							"Before you run this cell, make sure to add a unique user name to the file\n",
+							"`includes/configuration`, e.g.\n",
+							"\n",
+							"```\n",
+							"username = \"yourfirstname_yourlastname\"\n",
+							"```"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/configuration"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Make Notebook Idempotent"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.rm(rawPath, recurse=True)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Retrieve First Month of Data\n",
+							"\n",
+							"Next, we use the utility function, `retrieve_data` to retrieve the first file we will ingest. The function takes three arguments:\n",
+							"\n",
+							"- `year: int`\n",
+							"- `month: int`\n",
+							"- `rawPath: str`\n",
+							"- `is_late: bool` (optional)"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"retrieve_data(2020, 1, rawPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Expected File\n",
+							"\n",
+							"The expected file has the following name:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"file_2020_1 = \"health_tracker_data_2020_1.json\""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Display the Files in the Raw Path"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(rawPath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Write an Assertion Statement to Verify File Ingestion\n",
+							"\n",
+							"Note: the `print` statement would typically not be included in production code, nor in code used to test this notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"assert file_2020_1 in [\n",
+							"    item.name for item in dbutils.fs.ls(rawPath)\n",
+							"], \"File not present in Raw Path\"\n",
+							"print(\"Assertion passed.\")\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/00_setup')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -1295,6 +1491,477 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/01_raw_to_bronze')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "d512a90e-29a0-463c-8f69-1c5e1cd0e522"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Raw to Bronze Pattern"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Notebook Objective\n",
+							"\n",
+							"In this notebook we:\n",
+							"1. Ingest Raw Data\n",
+							"2. Augment the data with Ingestion Metadata\n",
+							"3. Stream write the augmented data to a Bronze Table"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Step Configuration"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/configuration"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Display the Files in the Raw Path"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(rawPath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Make Notebook Idempotent"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.rm(bronzePath, recurse=True)\n",
+							"dbutils.fs.rm(bronzeCheckpoint, recurse=True)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Ingest raw data\n",
+							"\n",
+							"Next, we will stream files from the source directory and write each line as a string to the Bronze table."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"kafka_schema = \"value STRING\"\n",
+							"\n",
+							"raw_health_tracker_data_df = (\n",
+							"    spark.readStream.format(\"text\").schema(kafka_schema).load(rawPath)\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Write an Assertion Statement to Verify the Schema of the Raw Data\n",
+							"\n",
+							"At this point, we write an assertion statement to verify that our streaming DataFrame has the schema we expect.\n",
+							"\n",
+							"Your assertion should make sure that the `raw_health_tracker_data_df` DataFrame has the correct schema.\n",
+							"\n",
+							"🤠 The function `_parse_datatype_string` (read more [here](http://spark.apache.org/docs/2.1.2/api/python/_modules/pyspark/sql/types.html)) converts a DDL format schema string into a Spark schema."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"from pyspark.sql.types import _parse_datatype_string\n",
+							"\n",
+							"assert raw_health_tracker_data_df.schema == _parse_datatype_string(\n",
+							"    kafka_schema\n",
+							"), \"File not present in Raw Path\"\n",
+							"print(\"Assertion passed.\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Display the Raw Data\n",
+							"\n",
+							"🤓 Each row here is a raw string in JSON format, as would be passed by a stream server like Kafka."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(raw_health_tracker_data_df, streamName=\"display_raw\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"❗️ To prevent the `display` function from continuously streaming, run the following utility function."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"stop_named_stream(spark, \"display_raw\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Ingestion Metadata\n",
+							"\n",
+							"As part of the ingestion process, we record metadata for the ingestion. In this case, we track the data sources, the ingestion time (`ingesttime`), and the ingest date (`ingestdate`) using the `pyspark.sql` functions `current_timestamp` and `lit`."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import current_timestamp, lit\n",
+							"\n",
+							"raw_health_tracker_data_df = raw_health_tracker_data_df.select(\n",
+							"    lit(\"files.training.databricks.com\").alias(\"datasource\"),\n",
+							"    current_timestamp().alias(\"ingesttime\"),\n",
+							"    \"value\",\n",
+							"    current_timestamp().cast(\"date\").alias(\"ingestdate\"),\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## WRITE Stream to a Bronze Table\n",
+							"\n",
+							"Finally, we write to the Bronze Table using Structured Streaming.\n",
+							"\n",
+							"🙅🏽‍♀️ While we _can_ write directly to tables using the `.table()` notation, this will create fully managed tables by writing output to a default location on DBFS. This is not best practice and should be avoided in nearly all cases."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Partitioning\n",
+							"This course uses a dataset that is extremely small relative to an actual production system. Still we demonstrate the best practice of partitioning by date and partition on the ingestion date, column `p_ingestdate`.\n",
+							"\n",
+							"😲 Note that we have aliased the `ingestdate` column to be `p_ingestdate`. We have done this in order to inform anyone who looks at the schema for this table that it has been partitioned by the ingestion date."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import col\n",
+							"\n",
+							"(\n",
+							"    raw_health_tracker_data_df.select(\n",
+							"        \"datasource\", \"ingesttime\", \"value\", col(\"ingestdate\").alias(\"p_ingestdate\")\n",
+							"    )\n",
+							"    .writeStream.format(\"delta\")\n",
+							"    .outputMode(\"append\")\n",
+							"    .option(\"checkpointLocation\", bronzeCheckpoint)\n",
+							"    .partitionBy(\"p_ingestdate\")\n",
+							"    .queryName(\"write_raw_to_bronze\")\n",
+							"    .start(bronzePath)\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Checkpointing\n",
+							"\n",
+							"When defining a Delta Lake streaming query, one of the options that you need to specify is the location of a checkpoint directory.\n",
+							"\n",
+							"`.writeStream.format(\"delta\").option(\"checkpointLocation\", <path-to-checkpoint-directory>) ...`\n",
+							"\n",
+							"This is actually a structured streaming feature. It stores the current state of your streaming job.\n",
+							"\n",
+							"Should your streaming job stop for some reason and you restart it, it will continue from where it left off.\n",
+							"\n",
+							"💀 If you do not have a checkpoint directory, when the streaming job stops, you lose all state around your streaming job and upon restart, you start from scratch.\n",
+							"\n",
+							"✋🏽 Also note that every streaming job should have its own checkpoint directory: no sharing."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Create a Reference to the Delta table files\n",
+							"\n",
+							"In this command we create a Spark DataFrame via a reference to the Delta file in DBFS."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"untilStreamIsReady(\"write_raw_to_bronze\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"bronze_health_tracker = spark.readStream.format(\"delta\").load(bronzePath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Troubleshooting\n",
+							"\n",
+							"😫 If you try to run this before the `writeStream` above has been created, you may see the following error:\n",
+							"\n",
+							"`\n",
+							"AnalysisException: Table schema is not set.  Write data into it or use CREATE TABLE to set the schema.;`\n",
+							"\n",
+							"If this happens, wait a moment for the `writeStream` to instantiate and run the command again."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Display the files in the Delta table\n",
+							"\n",
+							"These files can be viewed using the `dbutils.fs.ls` function."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(bronzePath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Write an Assertion Statement to Verify the Schema of the Bronze Delta Table\n",
+							"\n",
+							"At this point, we write an assertion statement to verify that our Bronze Delta table has the schema we expect.\n",
+							"\n",
+							"Your assertion should make sure that the `bronze_health_tracker` DataFrame has the correct schema.\n",
+							"\n",
+							"💪🏼 Remember, the function `_parse_datatype_string` converts a DDL format schema string into a Spark schema."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"assert bronze_health_tracker.schema == _parse_datatype_string(\n",
+							"    \"datasource STRING, ingesttime TIMESTAMP, value STRING, p_ingestdate DATE\"\n",
+							"), \"File not present in Bronze Path\"\n",
+							"print(\"Assertion passed.\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Display Running Streams\n",
+							"\n",
+							"You can use the following code to display all streams that are currently running."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"for stream in spark.streams.active:\n",
+							"    print(stream.name)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Register the Bronze Table in the Metastore\n",
+							"\n",
+							"Recall that a Delta table registered in the Metastore is a reference to a physical table created in object storage.\n",
+							"\n",
+							"We just created a Bronze Delta table in object storage by writing data to a specific location. If we register that location with the Metastore as a table, we can query the tables using SQL.\n",
+							"\n",
+							"(Because we will never directly query the Bronze table, it is not strictly necessary to register this table in the Metastore, but we will do so for demonstration purposes.)\n",
+							"\n",
+							"At Delta table creation, the Delta files in Object Storage define the schema, partitioning, and table properties. For this reason, it is not necessary to specify any of these when registering the table with the Metastore. Furthermore, no table repair is required. The transaction log stored with the Delta files contains all metadata needed for an immediate query."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"spark.sql(\n",
+							"    \"\"\"\n",
+							"DROP TABLE IF EXISTS health_tracker_plus_bronze\n",
+							"\"\"\"\n",
+							")\n",
+							"\n",
+							"spark.sql(\n",
+							"    f\"\"\"\n",
+							"CREATE TABLE health_tracker_plus_bronze\n",
+							"USING DELTA\n",
+							"LOCATION \"{bronzePath}\"\n",
+							"\"\"\"\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(\n",
+							"    spark.sql(\n",
+							"        \"\"\"\n",
+							"  DESCRIBE DETAIL health_tracker_plus_bronze\n",
+							"  \"\"\"\n",
+							"    )\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Delta Lake Python API\n",
+							"Delta Lake provides programmatic APIs to examine and manipulate Delta tables.\n",
+							"\n",
+							"Here, we create a reference to the Bronze table using the Delta Lake Python API."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from delta.tables import DeltaTable\n",
+							"\n",
+							"bronzeTable = DeltaTable.forPath(spark, bronzePath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(bronzeTable.history())"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Stop All Streams\n",
+							"\n",
+							"In the next notebook, we will stream data from the Bronze table to a Silver Delta table.\n",
+							"\n",
+							"Before we do so, let's shut down all streams in this notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"stop_all_streams()\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/01a_explore')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -1585,6 +2252,769 @@
 			"dependsOn": []
 		},
 		{
+			"name": "[concat(parameters('workspaceName'), '/02_bronze_to_silver')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "d3be9766-97d9-4b91-ac3e-82d6dfb74fc2"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Bronze to Silver - ETL into a Silver table\n",
+							"\n",
+							"We need to perform some transformations on the data to move it from bronze to silver tables.\n",
+							"\n",
+							"😎 We're reading _from_ the Delta table now because a Delta table can be both a source AND a sink."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Notebook Objective\n",
+							"\n",
+							"In this notebook we:\n",
+							"1. Harden the Raw to Bronze Step we wrote in a previous notebook\n",
+							"2. Develop the Bronze to Silver Step\n",
+							"   - Extract and Transform the Raw string to columns\n",
+							"   - Load this Data into the Silver Table"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Step Configuration"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/configuration"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Import Operation Functions"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/main/python/operations"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Display the Files in the Raw and Bronze Paths"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(rawPath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(bronzePath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Start Streams\n",
+							"\n",
+							"Before we add new streams, let's start the streams we have previously engineered.\n",
+							"\n",
+							"We will start two named streams:\n",
+							"\n",
+							"- `write_raw_to_bronze`\n",
+							"- `display_bronze`\n",
+							"\n",
+							"🤠 In a typical production setting, you would not interact with your streams as we are doing here. We stop and restart our streams in each new notebook for demonstration purposes. *It is easier to track everything that is happening if our streams are only running in our current notebook.*"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Current Delta Architecture\n",
+							"Next, we demonstrate everything we have built up to this point in our\n",
+							"Delta Architecture.\n",
+							"\n",
+							"#### Harden the Raw to Bronze Step\n",
+							"\n",
+							"We do so not with the ad hoc queries as written before, but now with\n",
+							"composable functions included in the file `includes/main/python/operations`.\n",
+							"This is a process known as **hardening** the step. If the data engineering\n",
+							"code is written in composable functions, it can be unit tested to ensure\n",
+							"stability.\n",
+							"\n",
+							"🛠 In our composable functions we will be making use of\n",
+							"[Python Type Hints](https://docs.python.org/3/library/typing.html).\n",
+							"\n",
+							"#### Python Type Hints\n",
+							"\n",
+							"For example, the function below takes and returns a string and is annotated as follows:\n",
+							"\n",
+							"```\n",
+							"def greeting(name: str) -> str:\n",
+							"    return 'Hello ' + name\n",
+							"```\n",
+							"In the function `greeting`, the argument `name` is expected to be of type `str`\n",
+							"and the return type `str`."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Step 1: Create the `rawDF` Streaming DataFrame\n",
+							"\n",
+							"In the previous notebook, we wrote:\n",
+							"\n",
+							"```\n",
+							"rawDF = (\n",
+							"  spark.readStream\n",
+							"  .format(\"text\")\n",
+							"  .schema(kafka_schema)\n",
+							"  .load(rawPath)\n",
+							")\n",
+							"```\n",
+							"\n",
+							"Now, we use the following function in `includes/main/python/operations`\n",
+							"\n",
+							"```\n",
+							"def read_stream_raw(spark: SparkSession, rawPath: str) -> DataFrame:\n",
+							"  kafka_schema = \"value STRING\"\n",
+							"  return (\n",
+							"    spark.readStream\n",
+							"    .format(\"text\")\n",
+							"    .schema(kafka_schema)\n",
+							"    .load(rawPath)\n",
+							"  )\n",
+							"```\n",
+							"\n",
+							"🤩 Note that we have injected the current Spark Session into the function as the variable `spark`."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"rawDF = read_stream_raw(spark, rawPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Step 2: Transform the Raw Data\n",
+							"\n",
+							"Next, we transform the raw data, `rawDF`. Previously, we wrote:\n",
+							"\n",
+							"```\n",
+							"rawDF = (\n",
+							"  rawDF.select(\n",
+							"    lit(\"files.training.databricks.com\").alias(\"datasource\"),\n",
+							"    current_timestamp().alias(\"ingesttime\"),\n",
+							"    \"value\",\n",
+							"    current_timestamp().cast(\"date\").alias(\"ingestdate\")\n",
+							"  )\n",
+							")\n",
+							"```\n",
+							"\n",
+							"Now, we use the following function in `includes/main/python/operations`\n",
+							"\n",
+							"```\n",
+							"def transform_raw(df: DataFrame) -> DataFrame:\n",
+							"  return (\n",
+							"    df.select(\n",
+							"      lit(\"files.training.databricks.com\").alias(\"datasource\"),\n",
+							"      current_timestamp().alias(\"ingesttime\"),\n",
+							"      \"value\",\n",
+							"      current_timestamp().cast(\"date\").alias(\"p_ingestdate\")\n",
+							"    )\n",
+							"  )\n",
+							"```"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"transformedRawDF = transform_raw(rawDF)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Step 3: Write Stream to a Bronze Table\n",
+							"\n",
+							"Finally, we write to the Bronze Table using Structured Streaming.\n",
+							"Previously, we wrote:\n",
+							"\n",
+							"```\n",
+							"(\n",
+							"  raw_health_tracker_data_df\n",
+							"  .select(\"datasource\", \"ingesttime\", \"value\", col(\"ingestdate\").alias(\"p_ingestdate\"))\n",
+							"  .writeStream\n",
+							"  .format(\"delta\")\n",
+							"  .outputMode(\"append\")\n",
+							"  .option(\"checkpointLocation\", bronzeCheckpoint)\n",
+							"  .partitionBy(\"p_ingestdate\")\n",
+							"  .queryName(\"write_raw_to_bronze\")\n",
+							"  .start(bronzePath)\n",
+							")\n",
+							"```\n",
+							"Now, we use the following function in `includes/main/python/operations`\n",
+							"\n",
+							"```\n",
+							"def create_stream_writer(dataframe: DataFrame, checkpoint: str,\n",
+							"                         name: str, partition_column: str=None,\n",
+							"                         mode: str=\"append\") -> DataStreamWriter:\n",
+							"\n",
+							"    stream_writer = (\n",
+							"        dataframe.writeStream\n",
+							"        .format(\"delta\")\n",
+							"        .outputMode(mode)\n",
+							"        .option(\"checkpointLocation\", checkpoint)\n",
+							"        .queryName(name)\n",
+							"    )\n",
+							"    if partition_column is not None:\n",
+							"      return stream_writer.partitionBy(partition_column)\n",
+							"    return stream_writer\n",
+							"```\n",
+							"\n",
+							"🤯 **Note**: This function will be used repeatedly, every time we create\n",
+							"a `DataStreamWriter`.\n",
+							"\n",
+							"☝🏿 This function returns a `DataStreamWriter`, not a `DataFrame`. This means\n",
+							"that we will have to call `.start()` as a function method to start the stream."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"rawToBronzeWriter = create_stream_writer(\n",
+							"    dataframe=transformedRawDF,\n",
+							"    checkpoint=bronzeCheckpoint,\n",
+							"    name=\"write_raw_to_bronze\",\n",
+							"    partition_column=\"p_ingestdate\",\n",
+							")\n",
+							"\n",
+							"rawToBronzeWriter.start(bronzePath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Display the Bronze Table"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"bronzeDF = read_stream_delta(spark, bronzePath)\n",
+							"display(bronzeDF, streamName=\"display_bronze\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Show Running Streams"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"for stream in spark.streams.active:\n",
+							"    print(stream.name)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Make Notebook Idempotent"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.rm(silverPath, recurse=True)\n",
+							"dbutils.fs.rm(silverCheckpoint, recurse=True)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Count Records in the Bronze Table\n",
+							"\n",
+							"Display how many records are in our table so we can watch it grow as the data streams in. As we ingest more files, you will be able to return to this streaming display and watch the count increase.\n",
+							"\n",
+							"- Use the DataFrame, `bronzeDF`, which is a reference to the Bronze Delta table\n",
+							"- Write spark code to count the number of records in the Bronze Delta table\n",
+							"\n",
+							"💡 **Hint:** While a standard DataFrame has a simple `.count()` method, when performing operations such as `count` on a stream, you must use `.groupby()` before the aggregate operation."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"display(bronzeDF.groupby().count(), streamName=\"display_bronze_count\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Retrieve Second Month of Data\n",
+							"\n",
+							"Next, we use the utility function, `retrieve_data` to retrieve another file.\n",
+							"\n",
+							"After you ingest the file by running the following cell, view the streams above; you should be able to watch the data being ingested."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"retrieve_data(2020, 2, rawPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Write an Assertion Statement to Verify File Ingestion\n",
+							"\n",
+							"The expected file has the following name:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"file_2020_2 = \"health_tracker_data_2020_2.json\""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"assert file_2020_2 in [\n",
+							"    item.name for item in dbutils.fs.ls(rawPath)\n",
+							"], \"File not present in Raw Path\"\n",
+							"print(\"Assertion passed.\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Extracting Nested JSON\n",
+							"\n",
+							"We now begin the work of creating the Silver Table. First, we extract the JSON data from the `value` column in the Bronze Delta table. That this is being done after first landing our ingested data in a Bronze table means that we do not need to worry about the ingestion process breaking because the data did not parse.\n",
+							"\n",
+							"This extraction consists of two steps:\n",
+							"\n",
+							"1. We extract the nested JSON from `bronzeDF` using the `pyspark.sql` function `from_json`.\n",
+							"\n",
+							"   📒 The `from_json` function requires that a schema be passed as argument. Here we pass the schema `json_schema = \"device_id INTEGER, heartrate DOUBLE, name STRING, time FLOAT\"`.\n",
+							"\n",
+							"1. We flatten the nested JSON into a new DataFrame by selecting all nested values of the `nested_json` column."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import from_json\n",
+							"\n",
+							"json_schema = \"device_id INTEGER, heartrate DOUBLE, name STRING, time FLOAT\"\n",
+							"\n",
+							"silver_health_tracker = bronzeDF.select(\n",
+							"    from_json(col(\"value\"), json_schema).alias(\"nested_json\")\n",
+							").select(\"nested_json.*\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Transform the Data\n",
+							"\n",
+							"The \"time\" column isn't currently human-readable in Unix time format.\n",
+							"We need to transform it to make it useful. We also extract just the date\n",
+							"from the timestamp. Next, we transform `silver_health_tracker` with the\n",
+							"following transformations:\n",
+							"\n",
+							"- convert the `time` column to a timestamp with the name `eventtime`\n",
+							"- convert the `time` column to a date with the name `p_eventdate`\n",
+							"\n",
+							"Note that we name the new column `p_eventdate` to indicate that we are\n",
+							"partitioning on this column."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import col, from_unixtime\n",
+							"\n",
+							"silver_health_tracker = silver_health_tracker.select(\n",
+							"    \"device_id\",\n",
+							"    \"heartrate\",\n",
+							"    from_unixtime(\"time\").cast(\"timestamp\").alias(\"eventtime\"),\n",
+							"    \"name\",\n",
+							"    from_unixtime(\"time\").cast(\"date\").alias(\"p_eventdate\"),\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Write an Assertion To Verify the Schema\n",
+							"\n",
+							"The DataFrame `silver_health_tracker` should now have the following schema:\n",
+							"\n",
+							"```\n",
+							"device_id: integer\n",
+							"heartrate: double\n",
+							"eventtime: timestamp\n",
+							"name: string\n",
+							"p_eventdate: date```\n",
+							"\n",
+							"Write a schema using DDL format to complete the below assertion statement.\n",
+							"\n",
+							"💪🏼 Remember, the function `_parse_datatype_string` converts a DDL format schema string into a Spark schema."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"from pyspark.sql.types import _parse_datatype_string\n",
+							"\n",
+							"assert silver_health_tracker.schema == _parse_datatype_string(\n",
+							"    \"\"\"\n",
+							"  device_id INTEGER,\n",
+							"  heartrate DOUBLE,\n",
+							"  eventtime TIMESTAMP,\n",
+							"  name STRING,\n",
+							"  p_eventdate DATE\n",
+							"\"\"\"\n",
+							"), \"Schemas do not match\"\n",
+							"print(\"Assertion passed.\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## WRITE Stream to a Silver Table\n",
+							"\n",
+							"Next, we stream write to the Silver table.\n",
+							"\n",
+							"We partion this table on event data (`p_eventdate`)."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"(\n",
+							"    silver_health_tracker.writeStream.format(\"delta\")\n",
+							"    .outputMode(\"append\")\n",
+							"    .option(\"checkpointLocation\", silverCheckpoint)\n",
+							"    .partitionBy(\"p_eventdate\")\n",
+							"    .queryName(\"write_bronze_to_silver\")\n",
+							"    .start(silverPath)\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"untilStreamIsReady(\"write_bronze_to_silver\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"spark.sql(\n",
+							"    \"\"\"\n",
+							"DROP TABLE IF EXISTS health_tracker_plus_silver\n",
+							"\"\"\"\n",
+							")\n",
+							"\n",
+							"spark.sql(\n",
+							"    f\"\"\"\n",
+							"CREATE TABLE health_tracker_plus_silver\n",
+							"USING DELTA\n",
+							"LOCATION \"{silverPath}\"\n",
+							"\"\"\"\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Troubleshooting\n",
+							"\n",
+							"😫 If you try to run this before the `writeStream` above has been created, you may see the following error:\n",
+							"\n",
+							"`\n",
+							"AnalysisException: Table schema is not set.  Write data into it or use CREATE TABLE to set the schema.;`\n",
+							"\n",
+							"If this happens, wait a moment for the `writeStream` to instantiate and run the command again."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Explore and Visualize the Data\n",
+							"\n",
+							"After running the following cell, click on \"Plot Options...\" and set the plot options as shown below:\n",
+							"\n",
+							"![Plot Options](https://files.training.databricks.com/images/pipelines_plot_options.png)"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(\n",
+							"    spark.readStream.table(\"health_tracker_plus_silver\"), streamName=\"display_silver\"\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### What patterns do you notice in the data? Anomalies?"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Missing Records\n",
+							"\n",
+							"When we look at the Silver table, we expect to see two months of data, five device measurements, 24 hours a day for (31 + 29) days, or 7200 records. (The data was recorded during the month of February in a leap year, which is why there are 29 days in the month.)\n",
+							"\n",
+							"❗️We do not have a correct count. It looks like `device_id`: 4 is missing 72 records."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import count\n",
+							"\n",
+							"display(\n",
+							"    spark.read.table(\"health_tracker_plus_silver\").groupby(\"device_id\").agg(count(\"*\"))\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Table Histories\n",
+							"\n",
+							"Recall that the Delta transaction log allows us to view all of the commits that have taken place in a Delta table's history."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from delta.tables import DeltaTable\n",
+							"\n",
+							"bronzeTable = DeltaTable.forPath(spark, bronzePath)\n",
+							"silverTable = DeltaTable.forPath(spark, silverPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(bronzeTable.history())"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(silverTable.history())"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Time Travel\n",
+							"\n",
+							"We can query an earlier version of the Delta table using the time travel feature. By running the following two cells, we can see that the current table count is larger than it was before we ingested the new data file into the stream."
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_bronze VERSION AS OF 0"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_bronze VERSION AS OF 1"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_bronze"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Stop All Streams\n",
+							"\n",
+							"In the next notebook, we will analyze data in the Silver Delta table, and perform some update operations on the data.\n",
+							"\n",
+							"Before we do so, let's shut down all streams in this notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"stop_all_streams()\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
 			"name": "[concat(parameters('workspaceName'), '/02_standardize')]",
 			"type": "Microsoft.Synapse/workspaces/notebooks",
 			"apiVersion": "2019-06-01-preview",
@@ -1605,7 +3035,7 @@
 						"spark.dynamicAllocation.enabled": "true",
 						"spark.dynamicAllocation.minExecutors": "1",
 						"spark.dynamicAllocation.maxExecutors": "1",
-						"spark.autotune.trackingId": "29dd7789-5fcd-4010-8b86-034a440f2334"
+						"spark.autotune.trackingId": "2a65d8f2-befe-4b34-bc42-23ac9561024e"
 					}
 				},
 				"metadata": {
@@ -1630,8 +3060,7 @@
 						"sparkVersion": "2.4",
 						"nodeCount": 10,
 						"cores": 4,
-						"memory": 28,
-						"automaticScaleJobs": true
+						"memory": 28
 					},
 					"sessionKeepAliveTimeout": 30
 				},
@@ -1922,6 +3351,666 @@
 							"#    jobId           = split(Message, '~', 2),\n",
 							"#    SparkPoolName   = split(Message, '~', 3),\n",
 							"#    UserId          = split(Message, '~', 5)"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/03_silver_update')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "9a0a0fa6-51a8-432d-a730-364f918fbf70"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Silver Table Updates\n",
+							"\n",
+							"We have processed data from the Bronze table to the Silver table.\n",
+							"We need to do some updates to ensure high quality in the Silver\n",
+							"table.\n",
+							"\n",
+							"😎 We're reading _from_ the Delta table now because a Delta table can be both a source AND a sink."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Notebook Objective\n",
+							"\n",
+							"In this notebook we:\n",
+							"1. Harden the Raw to Bronze and Bronze to Silver Steps we wrote in a\n",
+							"   previous notebook.\n",
+							"1. Diagnose data quality issues.\n",
+							"1. Update the broken readings in the Silver table.\n",
+							"1. Handle late-arriving data."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Step Configuration"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/configuration"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Import Operation Functions"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/main/python/operations"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Display the Files in the Raw and Bronze Paths"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(rawPath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(bronzePath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Start Streams\n",
+							"\n",
+							"Before we add new streams, let's start the streams we have previously engineered.\n",
+							"\n",
+							"We will start two named streams:\n",
+							"\n",
+							"- `write_raw_to_bronze`\n",
+							"- `write_bronze_to_silver`"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Current Delta Architecture\n",
+							"Next, we demonstrate everything we have built up to this point in our\n",
+							"Delta Architecture.\n",
+							"\n",
+							"Again, we do so with composable functions included in the\n",
+							"file `includes/main/python/operations`."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### The Hardened Raw to Bronze Pipeline"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"rawDF = read_stream_raw(spark, rawPath)\n",
+							"transformedRawDF = transform_raw(rawDF)\n",
+							"rawToBronzeWriter = create_stream_writer(\n",
+							"    dataframe=transformedRawDF,\n",
+							"    checkpoint=bronzeCheckpoint,\n",
+							"    name=\"write_raw_to_bronze\",\n",
+							"    partition_column=\"p_ingestdate\",\n",
+							")\n",
+							"rawToBronzeWriter.start(bronzePath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### The Hardened Bronze to Silver Pipeline"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"bronzeDF = read_stream_delta(spark, bronzePath)\n",
+							"transformedBronzeDF = transform_bronze(bronzeDF)\n",
+							"bronzeToSilverWriter = create_stream_writer(\n",
+							"    dataframe=transformedBronzeDF,\n",
+							"    checkpoint=silverCheckpoint,\n",
+							"    name=\"write_bronze_to_silver\",\n",
+							"    partition_column=\"p_eventdate\",\n",
+							")\n",
+							"bronzeToSilverWriter.start(silverPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Show Running Streams"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"for stream in spark.streams.active:\n",
+							"    print(stream.name)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Diagnose Data Quality Issues\n",
+							"\n",
+							"It is a good idea to perform quality checking on the data - such as looking for and reconciling anomalies - as well as further transformations such as cleaning and/or enriching the data.\n",
+							"\n",
+							"In a visualization in the previous notebook, we noticed:\n",
+							"\n",
+							"1. the table is missing records.\n",
+							"1. the presence of some negative recordings even though negative heart rates are impossible.\n",
+							"\n",
+							"Let's assess the extent of the negative reading anomalies."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Create a Temporary View of the Broken Readings in the Silver Table\n",
+							"\n",
+							"Display a count of the number of records for each day in the Silver\n",
+							"table where the measured heartrate is negative."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"from pyspark.sql.functions import count\n",
+							"\n",
+							"broken_readings = (\n",
+							"    spark.read.format(\"delta\")\n",
+							"    .load(silverPath)\n",
+							"    .select(col(\"heartrate\"), col(\"p_eventdate\"))\n",
+							"    .where(col(\"heartrate\") < 0)\n",
+							"    .groupby(\"p_eventdate\")\n",
+							"    .agg(count(\"heartrate\"))\n",
+							"    .orderBy(\"p_eventdate\")\n",
+							")\n",
+							"\n",
+							"broken_readings.createOrReplaceTempView(\"broken_readings\")\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT * FROM broken_readings"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT SUM(`count(heartrate)`) FROM broken_readings"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"We have identified two issues with the Silver table:\n",
+							"\n",
+							"1. There are missing records\n",
+							"1. There are records with broken readings\n",
+							"\n",
+							"Let's update the table."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Update the Broken Readings\n",
+							"To update the broken sensor readings (heartrate less than zero), we'll interpolate using the value recorded before and after for each device. The `pyspark.sql` functions `lag()` and `lead()` will make this a trivial calculation.\n",
+							"In order to use these functions, we need to import the pyspark.sql.window function `Window`. This will allow us to create a date window consisting of the dates immediately before and after our missing value.\n",
+							"\n",
+							"🚎Window functions operate on a group of rows, referred to as a window, and calculate a return value for each row based on the group of rows. Window functions are useful for processing tasks such as calculating a moving average, computing a cumulative statistic, or accessing the value of rows given the relative position of the current row.\n",
+							"\n",
+							"We'll write these values to a temporary view called `updates`. This view will be used later to upsert values into our Silver Delta table.\n",
+							"\n",
+							"[pyspark.sql window functions documentation](https://spark.apache.org/docs/3.0.0/sql-ref-functions-builtin.html#window-functions)"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Create a DataFrame that Interpolates the Broken Values"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.window import Window\n",
+							"from pyspark.sql.functions import col, lag, lead\n",
+							"\n",
+							"dateWindow = Window.orderBy(\"p_eventdate\")\n",
+							"\n",
+							"interpolatedDF = spark.read.table(\"health_tracker_plus_silver\").select(\n",
+							"    \"*\",\n",
+							"    lag(col(\"heartrate\")).over(dateWindow).alias(\"prev_amt\"),\n",
+							"    lead(col(\"heartrate\")).over(dateWindow).alias(\"next_amt\"),\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Create a DataFrame of Updates"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"updatesDF = interpolatedDF.where(col(\"heartrate\") < 0).select(\n",
+							"    \"device_id\",\n",
+							"    ((col(\"prev_amt\") + col(\"next_amt\")) / 2).alias(\"heartrate\"),\n",
+							"    \"eventtime\",\n",
+							"    \"name\",\n",
+							"    \"p_eventdate\",\n",
+							")\n",
+							"\n",
+							"display(updatesDF)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Write an assertion to verify that the Silver table and the UpdatesDF have the same schema"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"assert (\n",
+							"    spark.read.table(\"health_tracker_plus_silver\").schema == updatesDF.schema\n",
+							"), \"Schemas do not match\"\n",
+							"print(\"Assertion passed.\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Update the Silver Table"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from delta.tables import DeltaTable\n",
+							"\n",
+							"silverTable = DeltaTable.forPath(spark, silverPath)\n",
+							"\n",
+							"update_match = \"\"\"\n",
+							"  health_tracker.eventtime = updates.eventtime\n",
+							"  AND\n",
+							"  health_tracker.device_id = updates.device_id\n",
+							"\"\"\"\n",
+							"\n",
+							"update = {\"heartrate\": \"updates.heartrate\"}\n",
+							"\n",
+							"(\n",
+							"    silverTable.alias(\"health_tracker\")\n",
+							"    .merge(updatesDF.alias(\"updates\"), update_match)\n",
+							"    .whenMatchedUpdate(set=update)\n",
+							"    .execute()\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Handle Late-Arriving Data\n",
+							"\n",
+							"🤦🏼‍It turns out that our expectation of receiving the missing records late was correct. The complete month of February has subsequently been made available to us."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"retrieve_data(2020, 2, rawPath, is_late=True)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(rawPath + \"/late\"))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Count the records in the late file\n",
+							"\n",
+							"The late file is a json file in the `rawPath + \"late\"` directory."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"spark.read.json(rawPath + \"/late\").count()"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"🧐 You should note that the late file has all the records from the month of February, a count of 3480.\n",
+							"\n",
+							"❗️ If we simply append this file to the Bronze Delta table, it will create many duplicate entries."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Read the Late File\n",
+							"\n",
+							"Next we read in the late file. Note that we make use of the `transform_raw` function loaded from the `includes/main/python/operations` notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"kafka_schema = \"value STRING\"\n",
+							"\n",
+							"lateRawDF = spark.read.format(\"text\").schema(kafka_schema).load(rawPath + \"/late\")\n",
+							"\n",
+							"transformedLateRawDF = transform_raw(lateRawDF)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Merge the Late-Arriving Data with the Bronze Table\n",
+							"\n",
+							"We use the special method `.whenNotMatchedInsertAll` to insert only the records that are not present in the Bronze table. This is a best practice for preventing duplicate entries in a Delta table."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"bronzeTable = DeltaTable.forPath(spark, bronzePath)\n",
+							"\n",
+							"existing_record_match = \"bronze.value = latearrivals.value\"\n",
+							"\n",
+							"(\n",
+							"    bronzeTable.alias(\"bronze\")\n",
+							"    .merge(transformedLateRawDF.alias(\"latearrivals\"), existing_record_match)\n",
+							"    .whenNotMatchedInsertAll()\n",
+							"    .execute()\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Write An Aggregation on the Silver table\n",
+							"\n",
+							"### Count the number of records in the Silver table for each device id\n",
+							"\n",
+							"💪🏼 The Silver table is registered in the Metastore as `health_tracker_plus_silver`.\n",
+							"\n",
+							"👀 **Hint**: We did this exact query in the previous notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"untilStreamIsReady(\"write_bronze_to_silver\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"from pyspark.sql.functions import count\n",
+							"\n",
+							"display(\n",
+							"    spark.read.table(\"health_tracker_plus_silver\").groupby(\"device_id\").agg(count(\"*\"))\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Troubleshooting\n",
+							"\n",
+							"😫 If you run this query before the stream from the Bronze to the Silver tables has been picked up you will still see missing records for `device_id`: 4.\n",
+							"\n",
+							"Wait a moment and run the query again."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Check Yourself\n",
+							"\n",
+							"You should see that there are an equal number of entries, 1440, for each device id."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Table Histories"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(bronzeTable.history())"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(silverTable.history())"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Time Travel\n",
+							"We can query an earlier version of the Delta table using the time travel feature. By running the following two cells, we can see that the current table count is larger than it was before we ingested the new data file into the stream."
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_silver VERSION AS OF 0"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_silver VERSION AS OF 1"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_silver VERSION AS OF 2"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Stop All Streams\n",
+							"\n",
+							"In the next notebook, we will build the Silver to Gold Step.\n",
+							"\n",
+							"Before we do so, let's shut down all streams in this notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"stop_all_streams()\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
 						],
 						"outputs": [],
 						"execution_count": null
@@ -2240,6 +4329,3636 @@
 						"attachments": null,
 						"outputs": [],
 						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/04_silver_to_gold')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "859fde54-3ddb-4411-8ef1-f144e29d068b"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Silver to Gold - Building Aggregate Data Marts for End Users\n",
+							"\n",
+							"We will now perform some aggregations on the data, as requested by one of our end users who wants to be able to quickly see summary statistics, aggregated by device id, in a dashboard in their chosen BI tool."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Notebook Objective\n",
+							"\n",
+							"In this notebook we:\n",
+							"1. Create aggregations on the Silver table data\n",
+							"1. Load the aggregate data into a Gold table"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Step Configuration"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/configuration"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Import Operation Functions"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/main/python/operations"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Display the Files in the Raw Paths"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(rawPath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Make Notebook Idempotent"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.rm(goldPath, recurse=True)\n",
+							"dbutils.fs.rm(goldCheckpoint, recurse=True)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Start Streams\n",
+							"\n",
+							"Before we add new streams, let's start the streams we have previously engineered.\n",
+							"\n",
+							"We will start two named streams:\n",
+							"\n",
+							"- `write_raw_to_bronze`\n",
+							"- `write_bronze_to_silver`"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Current Delta Architecture\n",
+							"\n",
+							"Next, we demonstrate everything we have built up to this point in our\n",
+							"Delta architecture.\n",
+							"\n",
+							"Again, we do so with composable functions included in the\n",
+							"file `includes/main/python/operations`."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"rawDF = read_stream_raw(spark, rawPath)\n",
+							"transformedRawDF = transform_raw(rawDF)\n",
+							"rawToBronzeWriter = create_stream_writer(\n",
+							"    dataframe=transformedRawDF,\n",
+							"    checkpoint=bronzeCheckpoint,\n",
+							"    name=\"write_raw_to_bronze\",\n",
+							"    partition_column=\"p_ingestdate\",\n",
+							")\n",
+							"rawToBronzeWriter.start(bronzePath)\n",
+							"\n",
+							"bronzeDF = read_stream_delta(spark, bronzePath)\n",
+							"transformedBronzeDF = transform_bronze(bronzeDF)\n",
+							"bronzeToSilverWriter = create_stream_writer(\n",
+							"    dataframe=transformedBronzeDF,\n",
+							"    checkpoint=silverCheckpoint,\n",
+							"    name=\"write_bronze_to_silver\",\n",
+							"    partition_column=\"p_eventdate\",\n",
+							")\n",
+							"bronzeToSilverWriter.start(silverPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Update the Silver Table\n",
+							"\n",
+							"We periodically run the `update_silver_table` function to update the table and address the known issue of negative readings being ingested."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"update_silver_table(spark, silverPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Show Running Streams"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"for stream in spark.streams.active:\n",
+							"    print(stream.name)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Create Aggregation per User"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Create a read stream DataFrame and aggregate over the Silver table\n",
+							"\n",
+							"Use the following aggregates:\n",
+							"- mean of heartrate, aliased as `mean_heartrate`\n",
+							"- standard deviation of heartrate, aliased as `std_heartrate`\n",
+							"- maximum of heartrate, aliased as `max_heartrate`"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"from pyspark.sql.functions import col, mean, stddev, max\n",
+							"\n",
+							"silverTableReadStream = read_stream_delta(spark, silverPath)\n",
+							"\n",
+							"gold_health_tracker_data_df = silverTableReadStream.groupBy(\"device_id\").agg(\n",
+							"    mean(col(\"heartrate\")).alias(\"mean_heartrate\"),\n",
+							"    stddev(col(\"heartrate\")).alias(\"std_heartrate\"),\n",
+							"    max(col(\"heartrate\")).alias(\"max_heartrate\"),\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## WRITE Stream Gold Table Aggregation\n",
+							"\n",
+							"Note that we cannot use outputMode \"append\" for aggregations - we have to use \"complete\"."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Write the aggregate DataFrame to a Gold table"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"tableName = \"/aggregate_heartrate\"\n",
+							"tableCheckpoint = goldCheckpoint + tableName\n",
+							"tablePath = goldPath + tableName\n",
+							"\n",
+							"(\n",
+							"    gold_health_tracker_data_df.writeStream.format(\"delta\")\n",
+							"    .outputMode(\"complete\")\n",
+							"    .option(\"checkpointLocation\", tableCheckpoint)\n",
+							"    .queryName(\"write_silver_to_gold\")\n",
+							"    .start(tablePath)\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"untilStreamIsReady(\"write_silver_to_gold\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Register Gold Table in the Metastore"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"spark.sql(\n",
+							"    \"\"\"\n",
+							"DROP TABLE IF EXISTS health_tracker_gold_aggregate_heartrate\n",
+							"\"\"\"\n",
+							")\n",
+							"\n",
+							"spark.sql(\n",
+							"    f\"\"\"\n",
+							"CREATE TABLE health_tracker_gold_aggregate_heartrate\n",
+							"USING DELTA\n",
+							"LOCATION \"{tablePath}\"\n",
+							"\"\"\"\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Troubleshooting\n",
+							"\n",
+							"😫 If you try to run this before the `writeStream` above has been created, you may see the following error:\n",
+							"\n",
+							"`\n",
+							"AnalysisException: Table schema is not set.  Write data into it or use CREATE TABLE to set the schema.;`\n",
+							"\n",
+							"If this happens, wait a moment for the `writeStream` to instantiate and run the command again."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"We could now use this `health_tracker_gold` Delta table to define a dashboard. The query used to create the table could be issued nightly to prepare the dashboard for the following business day, or as often as needed according to SLA requirements."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Stop All Streams\n",
+							"\n",
+							"In the next notebook, you will harden the Silver to Gold Step.\n",
+							"\n",
+							"Before we do so, let's shut down all streams in this notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"stop_all_streams()\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/04_silver_to_gold_lab')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "db662449-b907-4e72-9724-76dff9da79a0"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Silver to Gold Step"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Notebook Objective\n",
+							"\n",
+							"In this notebook you:\n",
+							"1. Harden the Silver to Gold step we wrote in the previous notebook using the composable functions in the operations file."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Step Configuration"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/configuration"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Import Operation Functions"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/main/python/operations"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Start Streams\n",
+							"\n",
+							"Before we add new streams, let's start the streams we have previously engineered.\n",
+							"\n",
+							"We will start two named streams:\n",
+							"\n",
+							"- `write_raw_to_bronze`\n",
+							"- `write_bronze_to_silver`"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Current Delta Architecture\n",
+							"\n",
+							"Next, we demonstrate everything we have built up to this point in our\n",
+							"Delta Architecture.\n",
+							"\n",
+							"Again, we do so with composable functions included in the\n",
+							"file `includes/main/python/operations`."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"rawDF = read_stream_raw(spark, rawPath)\n",
+							"transformedRawDF = transform_raw(rawDF)\n",
+							"rawToBronzeWriter = create_stream_writer(\n",
+							"    dataframe=transformedRawDF,\n",
+							"    checkpoint=bronzeCheckpoint,\n",
+							"    name=\"write_raw_to_bronze\",\n",
+							"    partition_column=\"p_ingestdate\",\n",
+							")\n",
+							"rawToBronzeWriter.start(bronzePath)\n",
+							"\n",
+							"bronzeDF = read_stream_delta(spark, bronzePath)\n",
+							"transformedBronzeDF = transform_bronze(bronzeDF)\n",
+							"bronzeToSilverWriter = create_stream_writer(\n",
+							"    dataframe=transformedBronzeDF,\n",
+							"    checkpoint=silverCheckpoint,\n",
+							"    name=\"write_bronze_to_silver\",\n",
+							"    partition_column=\"p_eventdate\",\n",
+							")\n",
+							"bronzeToSilverWriter.start(silverPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"**Exercise:** Harden the Silver to Gold step that we created in the previous notebook.\n",
+							"\n",
+							"Now that you have seen the pattern, fill out the following code block to complete this step.\n",
+							"\n",
+							"💁🏻‍♀️Remember to use `mode=\"complete\"` with streaming aggregate tables."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"tableName = \"/aggregate_heartrate\"\n",
+							"tableCheckpoint = goldCheckpoint + tableName\n",
+							"tablePath = goldPath + tableName\n",
+							"\n",
+							"silverDF = read_stream_delta(spark, silverPath)\n",
+							"transformedSilverDF = transform_silver_mean_agg(silverDF)\n",
+							"silverToGoldAggWriter = create_stream_writer(\n",
+							"    dataframe=transformedSilverDF,\n",
+							"    checkpoint=tableCheckpoint,\n",
+							"    name=\"write_silver_to_gold\",\n",
+							"    mode=\"complete\",\n",
+							")\n",
+							"silverToGoldAggWriter.start(tablePath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## **Exercise:** Show all running streams"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"\n",
+							"for stream in spark.streams.active:\n",
+							"    print(stream.name)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Stop All Streams\n",
+							"\n",
+							"In the next notebook, we will take a look at schema enforcement and evolution with Delta Lake.\n",
+							"\n",
+							"Before we do so, let's shut down all streams in this notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"stop_all_streams()\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/05_schema_enforcement')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "7bc263d5-5e24-4c6f-9379-634af362d6c6"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Schema Enforcement\n",
+							"\n",
+							"😲 The health tracker changed how it records data, which means that the raw data schema has changed."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Notebook Objective\n",
+							"\n",
+							"In this notebook we:\n",
+							"1. Observe how schema enforcement deals with schema changes"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Step Configuration"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/configuration"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Import Operation Functions"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/main/python/operations_v2"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"❗️Note that we have loaded our operation functions from the file `includes/main/python/operations_v2`. This updated operations file has been modified to transform the bronze table using the new schema.\n",
+							"\n",
+							"The new schema has been loaded as `json_schema_v2`."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Display the Files in the Raw Paths"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(rawPath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Start Streams\n",
+							"\n",
+							"Before we add new streams, let's start the streams we have previously engineered.\n",
+							"\n",
+							"We will start two named streams:\n",
+							"\n",
+							"- `write_raw_to_bronze`\n",
+							"- `write_bronze_to_silver`"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Current Delta Architecture\n",
+							"\n",
+							"Next, we demonstrate everything we have built up to this point in our\n",
+							"Delta Architecture.\n",
+							"\n",
+							"Again, we do so with composable functions included in the\n",
+							"file `includes/main/python/operations`."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"rawDF = read_stream_raw(spark, rawPath)\n",
+							"transformedRawDF = transform_raw(rawDF)\n",
+							"rawToBronzeWriter = create_stream_writer(\n",
+							"    dataframe=transformedRawDF,\n",
+							"    checkpoint=bronzeCheckpoint,\n",
+							"    name=\"write_raw_to_bronze\",\n",
+							"    partition_column=\"p_ingestdate\",\n",
+							")\n",
+							"rawToBronzeWriter.start(bronzePath)\n",
+							"\n",
+							"bronzeDF = read_stream_delta(spark, bronzePath)\n",
+							"transformedBronzeDF = transform_bronze(bronzeDF)\n",
+							"bronzeToSilverWriter = create_stream_writer(\n",
+							"    dataframe=transformedBronzeDF,\n",
+							"    checkpoint=silverCheckpoint,\n",
+							"    name=\"write_bronze_to_silver\",\n",
+							"    partition_column=\"p_eventdate\",\n",
+							")\n",
+							"bronzeToSilverWriter.start(silverPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Update the Silver Table\n",
+							"\n",
+							"We periodically run the `update_silver_table` function to update the Silver table based on the known issue of negative readings being ingested."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"update_silver_table(spark, silverPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Show Running Streams"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"for stream in spark.streams.active:\n",
+							"    print(stream.name)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Retrieve Third Month of Data\n",
+							"\n",
+							"Next, we use the utility function, `retrieve_data` to retrieve another file.\n",
+							"\n",
+							"After you ingest the file, view the streams above."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"retrieve_data(2020, 3, rawPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Exercise:Write an Assertion Statement to Verify File Ingestion"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Expected File\n",
+							"\n",
+							"The expected file has the following name:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"file_2020_3 = \"health_tracker_data_2020_3.json\""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"assert file_2020_3 in [item.name for item in dbutils.fs.ls(rawPath)]"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_bronze"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_silver"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"DESCRIBE health_tracker_plus_silver"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## What Is Schema Enforcement?\n",
+							"Schema enforcement, also known as schema validation, is a safeguard in Delta Lake that ensures data quality by rejecting writes to a table that do not match the table’s schema. Like the front desk manager at a busy restaurant that only accepts reservations, it checks to see whether each column in data inserted into the table is on its list of expected columns (in other words, whether each one has a “reservation”), and rejects any writes with columns that aren’t on the list."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Show Running Streams"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"for stream in spark.streams.active:\n",
+							"    print(stream.name)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"Note that the `write_bronze_to_silver` stream has died. If you navigate back up to the cell in which we started the streams, you should see the following error:\n",
+							"\n",
+							"`org.apache.spark.sql.AnalysisException: A schema mismatch detected when writing to the Delta table`.\n",
+							"\n",
+							"The stream has died because the schema of the incoming data did not match the schema of the table being written to."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Stop All Streams\n",
+							"\n",
+							"In the next notebook, we will take a look at schema evolution with Delta Lake.\n",
+							"\n",
+							"Before we do so, let's shut down all streams in this notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"stop_all_streams()\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/06_schema_evolution')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "b0c85eba-2e42-44b4-90c7-fc3969e1aa58"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Schema Evolution\n",
+							"\n",
+							"😲 The health tracker changed how it records data, which means that the\n",
+							"raw data schema has changed. In this notebook, we show how to build our\n",
+							"streams to merge the changes to the schema.\n",
+							"\n",
+							"**TODO** *Discussion on what kinds of changes will work with the merge option.*"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Notebook Objective\n",
+							"\n",
+							"In this notebook we:\n",
+							"1. Use schema evolution to deal with schema changes"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Step Configuration"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/configuration"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Import Operation Functions"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./includes/main/python/operations_v2"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Display the Files in the Raw Paths"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"display(dbutils.fs.ls(rawPath))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Start Streams\n",
+							"\n",
+							"Before we add new streams, let's start the streams we have previously engineered.\n",
+							"\n",
+							"We will start two named streams:\n",
+							"\n",
+							"- `write_raw_to_bronze`\n",
+							"- `write_bronze_to_silver`\n",
+							"\n",
+							"❗️Note that we have loaded our operation functions from the file `includes/main/python/operations_v2`. This updated operations file has been modified to transform the bronze table using the new schema.\n",
+							"\n",
+							"The new schema has been loaded as `json_schema_v2`."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Current Delta Architecture\n",
+							"**TODO**\n",
+							"Next, we demonstrate everything we have built up to this point in our\n",
+							"Delta Architecture.\n",
+							"\n",
+							"Again, we do so with composable functions included in the\n",
+							"file `includes/main/python/operations`.\n",
+							"\n",
+							"Add the `mergeSchema=True` argument to the Silver table stream writer."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# ANSWER\n",
+							"rawDF = read_stream_raw(spark, rawPath)\n",
+							"transformedRawDF = transform_raw(rawDF)\n",
+							"rawToBronzeWriter = create_stream_writer(\n",
+							"    dataframe=transformedRawDF,\n",
+							"    checkpoint=bronzeCheckpoint,\n",
+							"    name=\"write_raw_to_bronze\",\n",
+							"    partition_column=\"p_ingestdate\",\n",
+							")\n",
+							"rawToBronzeWriter.start(bronzePath)\n",
+							"\n",
+							"bronzeDF = read_stream_delta(spark, bronzePath)\n",
+							"transformedBronzeDF = transform_bronze(bronzeDF)\n",
+							"bronzeToSilverWriter = create_stream_writer(\n",
+							"    dataframe=transformedBronzeDF,\n",
+							"    checkpoint=silverCheckpoint,\n",
+							"    name=\"write_bronze_to_silver\",\n",
+							"    partition_column=\"p_eventdate\",\n",
+							"    mergeSchema=True,\n",
+							")\n",
+							"bronzeToSilverWriter.start(silverPath)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Show Running Streams"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"for stream in spark.streams.active:\n",
+							"    print(stream.name)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_bronze"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"SELECT COUNT(*) FROM health_tracker_plus_silver"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "sparksql"
+							}
+						},
+						"source": [
+							"%%sql\n",
+							"\n",
+							"DESCRIBE health_tracker_plus_silver"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Stop All Streams\n",
+							"\n",
+							"In the next notebook in this course, we will take a look at schema enforcement and evolution with Delta Lake.\n",
+							"\n",
+							"Before we do so, let's shut down all streams in this notebook."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"stop_all_streams()\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/accessing-data-s3-buckets')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/resources"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "9ba55178-d6c4-474c-ac83-7e7faad973c4"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"#![Spark Logo Tiny](https://files.training.databricks.com/images/105/logo_spark_tiny.png) Accessing Data in S3 Buckets\n",
+							"\n",
+							"## Learning Objectives\n",
+							"\n",
+							"By the end of this lessons, you should be able to:\n",
+							"* Describe how IAM roles provide secure access to data in S3 buckets\n",
+							"* Mount an S3 bucket to DBFS\n",
+							"* Use s3a URLs to directly access buckets\n",
+							"\n",
+							"The [recently added SAML-backed IAM credential passthrough](https://databricks.com/blog/2019/07/17/how-databricks-iam-credential-passthrough-solves-common-data-authorization-problems.html) provides our most-secure approach to managing data access in large organizations. If a customer wishes to set this up, contact your Databricks representative for configuration details.\n",
+							"\n",
+							"In this notebook we will demonstrate using [cluster-mounted IAM roles](https://docs.databricks.com/administration-guide/cloud-configurations/aws/iam-roles.html#step-6-launch-a-cluster-with-the-s3-iam-role) to grant data access rights to all users with permission to access a cluster. Some considerations:\n",
+							"\n",
+							"### Security\n",
+							"The main benefit of this system is that it is straightforwardly secure. As long as the admin team maps users to EC2 instances correctly, each user has access to the correct set of entitlements.\n",
+							"\n",
+							"### Attribution\n",
+							"This system does not allow attribution to users. Because all users on a given EC2 instance share the same Instance Profile, cloud-native audit logs such as AWS CloudTrail can attribute accesses only to the instance, not to the user running code on the instance.\n",
+							"\n",
+							"### Ease of administration\n",
+							"This system is easy to administer provided the number of users and entitlements remain small. However, administration becomes increasingly difficult as the organization scales: admins need to ensure that each user accesses only the EC2 instances with the correct Instance Profiles, which may require manual management if the Instance Profiles don’t map cleanly to policies in the admin’s identity management system (such as LDAP or Active Directory).\n",
+							"\n",
+							"### Efficiency\n",
+							"This system requires a separate EC2 instance for each entitlement, which quickly becomes expensive as the organization’s permission model becomes more complex. If there are only a few users with a particular entitlement, that EC2 instance will either sit idle most of the day (increasing cost) or have to be stopped and started according to the work schedule of its users (increasing administrative overhead and slowing down users). Because Apache Spark™ distributes work across a cluster of instances that all require the same Instance Profile, the cost of an idle cluster can become quite large."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Learning Objectives\n",
+							"In this lesson, we will demonstrate using IAM roles to manage sensitive connection information for an encrypted S3 bucket. In this notebook, we'll demonstrate:\n",
+							"\n",
+							"1. [Secure Access to S3 Buckets Using IAM Roles](https://docs.databricks.com/administration-guide/cloud-configurations/aws/iam-roles.html)\n",
+							"1. Mounting an S3 bucket\n",
+							"1. Using s3a URLs to directly access buckets"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Amazon Simple Storage Service (S3) Bucket Encryption\n",
+							"\n",
+							"1. [Setting default encryption](https://docs.aws.amazon.com/AmazonS3/latest/user-guide/default-bucket-encryption.html) for a bucket will encrypt all objects as they're stored\n",
+							"1. Works with all existing buckets\n",
+							"1. Provides 2 options:\n",
+							"  1. Amazon S3-managed keys (SSE-S3)\n",
+							"  1. AWS KMS-managed keys (SSE-KMS)\n",
+							"1. No new charges for default encryption, but [AWS Key Management Services (KMS) charges apply](https://aws.amazon.com/kms/pricing/)"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"\n",
+							"## Mount S3 Bucket - Read/List\n",
+							"\n",
+							"In this section, we'll mount a bucket with our current IAM role, which has list/read permissions on our target S3 bucket.\n",
+							"\n",
+							"<img alt=\"Caution\" title=\"Caution\" style=\"vertical-align: text-bottom; position: relative; height:1.3em; top:0.0em\" src=\"https://files.training.databricks.com/static/images/icon-warning.svg\"/> Any user within the workspace can view and read the files mounted using this key"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# Unmount directory if previously mounted\n",
+							"MOUNTPOINT = \"/mnt/s3demo\"\n",
+							"if MOUNTPOINT in [mnt.mountPoint for mnt in dbutils.fs.mounts()]:\n",
+							"  dbutils.fs.unmount(MOUNTPOINT)\n",
+							"\n",
+							"# Define the bucket URL\n",
+							"bucketURL = \"s3a://awscore-encrypted\"\n",
+							"\n",
+							"# Mount using the s3a prefix\n",
+							"try:\n",
+							"  dbutils.fs.mount(bucketURL, MOUNTPOINT)\n",
+							"except Exception as e:\n",
+							"  if \"Directory already mounted\" in str(e):\n",
+							"    pass # Ignore error if already mounted.\n",
+							"  else:\n",
+							"    raise e\n",
+							"\n",
+							"display(dbutils.fs.ls(MOUNTPOINT))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Define and display a Dataframe that reads a file from the mounted directory"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"salesDF = (spark.read\n",
+							"              .option(\"header\", True)\n",
+							"              .option(\"inferSchema\", True)\n",
+							"              .csv(MOUNTPOINT + \"/source/sales.csv\"))\n",
+							"\n",
+							"display(salesDF)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Filter the Dataframe and display the results"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import col\n",
+							"\n",
+							"sales2004DF = salesDF.filter(\n",
+							"    (col(\"ShipDateKey\") > 20031231) & (col(\"ShipDateKey\") <= 20041231)\n",
+							")\n",
+							"display(sales2004DF)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Details....\n",
+							"\n",
+							"\n",
+							"While we can list and read files with these credentials, our job will abort when we try to write."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"try:\n",
+							"  sales2004DF.write.mode(\"overwrite\").parquet(MOUNTPOINT + \"/output/sales2004DF\")\n",
+							"except:\n",
+							"  print(\"Job aborted\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Review\n",
+							"\n",
+							"- We just used a read-only IAM role to mount an S3 bucket to the DBFS.\n",
+							"- Mounting data to DBFS makes that content available to anyone in that workspace.\n",
+							"- This mounted bucket will persist between sessions with these same permissions.\n",
+							"- In order to gain write privileges, we will need to redefine our IAM role, or switch to a different IAM role with more privileges."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"# Switch IAM Role\n",
+							"We have already defined another IAM role in this workspace that has root access to files on this bucket. We will attach to a cluster that has this IAM role mounted now.\n",
+							"\n",
+							"<img alt=\"Side Note\" title=\"Side Note\" style=\"vertical-align: text-bottom; position: relative; height:1.75em; top:0.05em; transform:rotate(15deg)\" src=\"https://files.training.databricks.com/static/images/icon-note.webp\"/> The mount we defined is still available in the workspace with the same permissions.\n",
+							"\n",
+							"As we switch clusters, we create a new SparkSession, so all variables are lost. We'll redefine the path for our mounted date and our bucket URL."
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"bucketURL = \"s3a://awscore-encrypted\"\n",
+							"MOUNTPOINT = \"/mnt/s3demo\"\n",
+							"dbutils.fs.refreshMounts()"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Writing Directly to Files Using s3a URL\n",
+							"\n",
+							"Here, we'll bypass mounting to directly write to a S3 bucket. This ensures that only users in the workspace that have access to the associated IAM role will be able to write."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import col\n",
+							"\n",
+							"(spark.read\n",
+							"  .option(\"header\", True)\n",
+							"  .option(\"inferSchema\", True)\n",
+							"  .csv(MOUNTPOINT + \"/source/sales.csv\")\n",
+							"  .filter((col(\"ShipDateKey\") > 20031231) &\n",
+							"          (col(\"ShipDateKey\") <= 20041231))\n",
+							"  .write\n",
+							"  .mode(\"overwrite\")\n",
+							"  .parquet(bucketURL + \"/output/sales2004DF\")\n",
+							")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"Because we still have our bucket mounted with read-only access to the DBFS, we can use this to check that our write was successful."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.ls(MOUNTPOINT+\"/output\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"<img alt=\"Side Note\" title=\"Side Note\" style=\"vertical-align: text-bottom; position: relative; height:1.75em; top:0.05em; transform:rotate(15deg)\" src=\"https://files.training.databricks.com/static/images/icon-note.webp\"/> Using the `overwrite` option requires both `put` and `delete` privileges on S3, as the files are actually fully deleted before the new files are written. Granting only the `put` action will prevent file deletion (though this isn't always desired, as we'll see when optimizing Delta Lakes later in the course)."
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"Because our current IAM role has `delete` rights, we can use the DBFS to remove our written files."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.rm(\"s3a://awscore-encrypted/output/sales2004DF/\", True)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"Our target directory should now be empty."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.ls(MOUNTPOINT + \"/output\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"\n",
+							"### Cleaning up mounts\n",
+							"\n",
+							"If we don't explicitly unmount, the read-only bucket mounted at the beginning of this notebook will remain accessible in the workspace.\n",
+							"\n",
+							"<img alt=\"Side Note\" title=\"Side Note\" style=\"vertical-align: text-bottom; position: relative; height:1.75em; top:0.05em; transform:rotate(15deg)\" src=\"https://files.training.databricks.com/static/images/icon-note.webp\"/> Because we only have read/list permissions, this may be desirable, but you should always be careful when mounting any potentially confidential data."
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"if MOUNTPOINT in [mnt.mountPoint for mnt in dbutils.fs.mounts()]:\n",
+							"  dbutils.fs.unmount(MOUNTPOINT)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Online Resources\n",
+							"\n",
+							"- [Databricks: S3 Docs](https://docs.databricks.com/spark/latest/data-sources/aws/amazon-s3.html)\n",
+							"- [Databricks: S3 Encryption Docs](https://docs.databricks.com/spark/latest/data-sources/aws/amazon-s3.html#encryption)\n",
+							"- [Databricks: Secure Access to S3 Buckets Using IAM Roles](https://docs.databricks.com/administration-guide/cloud-configurations/aws/iam-roles.html)\n",
+							"- [Databricks: Secure Access to S3 Buckets Across Accounts Using IAM Roles with an AssumeRole Policy](https://docs.databricks.com/administration-guide/cloud-configurations/aws/assume-role.html)\n",
+							"- [Amazon S3: Default Encryption for S3 Buckets](https://docs.aws.amazon.com/AmazonS3/latest/dev/bucket-encryption.html)\n",
+							"- [Amazon S3: Sharing an Object with Others](https://docs.aws.amazon.com/AmazonS3/latest/dev/ShareObjectPreSignedURL.html)\n",
+							"- [Amazon S3: Bucket Policy Examples](https://docs.aws.amazon.com/AmazonS3/latest/dev/example-bucket-policies.html)\n",
+							"- [Protecting Data Using Server-Side Encryption with Amazon S3-Managed Encryption Keys (SSE-S3)](https://docs.aws.amazon.com/AmazonS3/latest/dev/UsingServerSideEncryption.html)"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/blob-storage')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/resources"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "358e4890-b455-4d3c-95f8-d507495e7ee7"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"#![Spark Logo Tiny](https://files.training.databricks.com/images/105/logo_spark_tiny.png) Key Vault-Backed Secret Scopes\n",
+							"\n",
+							"## Learning Objectives\n",
+							"By the end of these lessons, you should be able to:\n",
+							"* Configure Databricks to access Key Vault secrets\n",
+							"* Read and write data directly from Blob Storage using secrets stored in Key Vault\n",
+							"* Set different levels of access permission using SAS at the Storage service level\n",
+							"* Mount Blob Storage into DBFS\n",
+							"* Describe how mounting impacts secure access to data\n",
+							"\n",
+							"The overall goal of these three notebooks is to read and write data directly from Blob Storage using secrets stored in a Key Vault, accessed securely through the Databricks Secrets utility.\n",
+							"\n",
+							"This goal has been broken into 3 notebooks to make each step more digestible:\n",
+							"1. 03a - Blob Storage - In the first notebook, we will add a file to a Blob on a Storage Account and generate SAS tokens with different permissions levels\n",
+							"1. 03b - Key Vault - In the second notebook, we will configure an Azure Key Vault Access Policy and add text-based credentials as secrets\n",
+							"1. 03c - Key Vault Backed Secret Scopes - In the third notebook, we will define a Secret Scope in Databircks by linking to the Key Vault and use the previously stored credentials to read and write from the Storage Container"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"##![Spark Logo Tiny](https://files.training.databricks.com/images/105/logo_spark_tiny.png) 03a - Blob Storage\n",
+							"\n",
+							"This notebook is focused on configuring the blob storage required for the ADB Core partner training, but should provide general enough instructions to be useful in other settings.\n",
+							"\n",
+							"\n",
+							" ### Learning Objectives\n",
+							" By the end of this lesson, you should be able to:\n",
+							"\n",
+							" - Create blob storage containers\n",
+							" - Load data into a container\n",
+							" - Create a read/list SAS token\n",
+							" - Create a SAS token with full privileges"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Create container and upload a file\n",
+							"\n",
+							"Follow the screenshots below to create a container and upload a file.\n",
+							"\n",
+							"You will be using the Azure Portal for these operations.\n",
+							"\n",
+							"The Azure Portal can be accessed from your workspace by clicking on the **PORTAL** link, top right next to your name."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Access your Storage Account in the Azure Portal\n",
+							"\n",
+							"\n",
+							"A storage account has been provided for you, but you can follow instruction here to [create a new Storage Account in your Resource Group](https://docs.microsoft.com/en-us/azure/storage/common/storage-quickstart-create-account?tabs=azure-portal).\n",
+							"\n",
+							"1. Click on \"All resources\"\n",
+							"2. Click on the storage account starting with `g1`\n",
+							"\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/resources.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## View the Blobs, if any stored with this storage account\n",
+							"\n",
+							"A storage account can have multiple containers.\n",
+							"\n",
+							"We will upload our file as a blob into a Container for this storage account.\n",
+							"\n",
+							"First, see what containers -- if any -- exist in this storage account.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/storage1.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Add a Container to hold Blobs\n",
+							"\n",
+							"Currently, we have no containers defined in our blob. Click the indicated button to add a container.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/blobs-empty.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Name the container\n",
+							"\n",
+							"We'll name our first container `commonfiles`.\n",
+							"\n",
+							"Note that the container name is hardcoded in the following notebooks, if you use a name besides `commonfiles` you will have to edit the following notebooks to reflect the name you chose in place of `commonfiles`\n",
+							"\n",
+							"Click \"OK\" to continue.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/new-blob.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Download a file to your computer\n",
+							"\n",
+							"Now that we have created a container named `commonfiles`, let's upload a file to the container.\n",
+							"\n",
+							"Click the following link to download a csv to your computer:\n",
+							"### Download [this file](https://files.training.databricks.com/courses/adbcore/commonfiles/sales.csv) to your local machine."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Select the container and upload some data\n",
+							"\n",
+							"We will upload the sales.csv file we just downloaded.\n",
+							"\n",
+							"#### Select the container commonfiles\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/blobs-1.png\" width=800px />\n",
+							"\n",
+							"#### Select Upload to prepare to upload Data\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/blob-empty.png\" width=800px />\n",
+							"\n",
+							"#### Upload the file into the container\n",
+							"\n",
+							"1. Select the downloaded file \"sales.csv\" from the file picker.\n",
+							"2. Click \"Upload\"\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/file-upload.png\"/>"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Congratulations! You have uploaded a file into Azure Blob Storage\n",
+							"\n",
+							"Once you have content in Azure Blob Storage you can access that content in an Azure Databricks Notebook.\n",
+							"\n",
+							"For further reading you can see the [Documentation](https://docs.databricks.com/data/data-sources/azure/azure-storage.html)\n",
+							"\n",
+							"One way to access the content in a container is to generate an SAS Token\n",
+							"\n",
+							"**In the next steps you will generate an SAS Token for this container**"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Copy Down Variables to Be Used in Next Lesson\n",
+							"\n",
+							"You'll need a few values that we'll be loading into a Key Vault in the next lesson. We'll copy them into cells below."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Record Storage Account Name\n",
+							"\n",
+							"Copy/paste the name of your storage account below.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/account-name.png\"/>"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"## YOUR STORAGE ACCOUNT NAME HERE ####\n",
+							"## NOTE WE DO NOT RUN ANY CODE HERE, THIS IS JUST SAVED FOR USE IN THE FOLLOWING NOTEBOOK"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Generate a SAS token with all privileges\n",
+							"\n",
+							"In the Storage Container View in the Azure Portal\n",
+							"\n",
+							"1. Click \"Shared access signature\"\n",
+							"2. Select all the permissions\n",
+							"3. Click \"Generate SAS and connection string\" to generate the SAS Token.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/sas-write.png\"/>"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Retrieve the SAS Token generated\n",
+							"\n",
+							"You will use the SAS token in a later notebook.\n",
+							"\n",
+							"For now copy and paste the SAS token into the cell below.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/sas-write-secrets.png\" />"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"## YOUR FULL PERMISSIONS TOKEN HERE ####\n",
+							"## NOTE WE DO NOT RUN ANY CODE HERE, THIS IS JUST SAVED FOR USE IN THE FOLLOWING NOTEBOOK"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Generate a SAS token with only Read and List privileges\n",
+							"\n",
+							"An SAS token is one way to gain access to data in your container.\n",
+							"\n",
+							"You will create an SAS token with read and list permissions for the container.\n",
+							"\n",
+							"In the Storage Container View in the Azure Portal\n",
+							"\n",
+							"1. Click \"Shared access signature\"\n",
+							"2. Deselect the appropriate permissions to create a \"Read-Only\" Token.\n",
+							"3. Make sure you retained the list permission, the list permission is useful to view the contents of the container\n",
+							"3. Click \"Generate SAS and connection string\" to generate the SAS Token.\n",
+							"\n",
+							"#### **Warning a common mistake is to fail to select the list privilege, please verify you have selected read and list checkbox**\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/sas-read.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Retrieve the SAS Token generated\n",
+							"\n",
+							"You will use the SAS token in a later notebook.\n",
+							"\n",
+							"For now copy and paste the SAS token into the cell below.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/sas-write-secrets.png\" />"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"## YOUR READ ONLY TOKEN HERE ####\n",
+							"## NOTE WE DO NOT RUN ANY CODE HERE, THIS IS JUST SAVED FOR USE IN THE FOLLOWING NOTEBOOK"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"# Obscuring your SAS Tokens\n",
+							"\n",
+							"In this series of Notebooks we use our SAS Token to access the blob store. In the cells above you store the SAS token in plain text, this is **bad practice and only done for educational purposes**. Your SAS Token in a production environment should be stored in Secrets/KeyVault to prevent it from being displayed in plain text inside a notebook.\n",
+							"\n",
+							"We will see how to do this in the next notebook."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Congratulations!\n",
+							"\n",
+							"You have:\n",
+							"\n",
+							" - Created a blob storage container\n",
+							" - Loaded data into a container\n",
+							" - Created a read/list SAS token\n",
+							" - Created a SAS token with full permissions\n",
+							" - Saved the SAS tokens for later use\n",
+							"\n",
+							"In this notebook, we uploaded a file to a blob storage container and generated SAS tokens with different access permissions to the storage account. In the next notebook we will see how to store the SAS tokens securely in the Key Vault."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/configuration')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines/includes"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('configuration_properties_bigDataPool_referenceName')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "56g",
+					"driverCores": 8,
+					"executorMemory": "56g",
+					"executorCores": 8,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "1",
+						"spark.autotune.trackingId": "c5e9b69c-f683-4895-a35b-5dc89df5d345"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/356cc0b4-92be-42c1-8585-6182d784d5eb/resourceGroups/mdwdops-imdmo-dev-rg/providers/Microsoft.Synapse/workspaces/sywsdevimdmo/bigDataPools/imsparkpool3",
+						"name": "imsparkpool3",
+						"type": "Spark",
+						"endpoint": "https://sywsdevimdmo.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/imsparkpool3",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.1",
+						"nodeCount": 4,
+						"cores": 8,
+						"memory": 56,
+						"automaticScaleJobs": true
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "markdown",
+						"metadata": {},
+						"source": [
+							"Define Data Paths."
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"# ANSWER\n",
+							"username = \"irfanmaroof\"\n",
+							"keyvaultlsname = 'Ls_KeyVault_01'\n",
+							"adls2lsname = 'Ls_AdlsGen2_01'"
+						],
+						"outputs": [],
+						"execution_count": 3
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"from pyspark.sql import SparkSession\r\n",
+							"\r\n",
+							"sc = SparkSession.builder.getOrCreate()\r\n",
+							"token_library = sc._jvm.com.microsoft.azure.synapse.tokenlibrary.TokenLibrary\r\n",
+							"storage_account = token_library.getSecretWithLS(keyvaultlsname, \"datalakeaccountname\")\r\n",
+							"\r\n",
+							"spark.conf.set(\"spark.storage.synapse.linkedServiceName\", adls2lsname)\r\n",
+							"spark.conf.set(\"fs.azure.account.oauth.provider.type\", \"com.microsoft.azure.synapse.tokenlibrary.LinkedServiceBasedTokenProvider\")"
+						],
+						"outputs": [],
+						"execution_count": 4
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"plusPipelinePath = f\"abfss://datalake@{storage_account}.dfs.core.windows.net//dataengineering/plus/\"\n",
+							"\n",
+							"\n",
+							"rawPath = plusPipelinePath + \"raw/\"\n",
+							"bronzePath = plusPipelinePath + \"bronze/\"\n",
+							"silverPath = plusPipelinePath + \"silver/\"\n",
+							"goldPath = plusPipelinePath + \"gold/\"\n",
+							"\n",
+							"checkpointPath = plusPipelinePath + \"checkpoints/\"\n",
+							"bronzeCheckpoint = checkpointPath + \"bronze/\"\n",
+							"silverCheckpoint = checkpointPath + \"silver/\"\n",
+							"goldCheckpoint = checkpointPath + \"gold/\""
+						],
+						"outputs": [],
+						"execution_count": 5
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {},
+						"source": [
+							"Configure Database"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"spark.sql(f\"CREATE DATABASE IF NOT EXISTS demo_delta\")\n",
+							"spark.sql(f\"USE demo_delta\")"
+						],
+						"outputs": [],
+						"execution_count": 6
+					},
+					{
+						"cell_type": "markdown",
+						"metadata": {},
+						"source": [
+							"Import Utility Functions"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"jupyter": {
+								"source_hidden": false,
+								"outputs_hidden": false
+							},
+							"nteract": {
+								"transient": {
+									"deleting": false
+								}
+							}
+						},
+						"source": [
+							"mssparkutils.notebook.help()"
+						],
+						"outputs": [],
+						"execution_count": 8
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"%run utilities"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"metadata": {},
+						"source": [
+							"streams_stopped = stop_all_streams()\n",
+							"\n",
+							"if streams_stopped:\n",
+							"    print(\"All streams stopped.\")\n",
+							"else:\n",
+							"    print(\"No running streams.\")"
+						],
+						"outputs": [],
+						"execution_count": 16
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/key-vault-backed-secret-scopes')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/resources"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "34cb02e4-cd7c-4eab-9286-6844f805fc65"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"#![Spark Logo Tiny](https://files.training.databricks.com/images/105/logo_spark_tiny.png) Key Vault-Backed Secret Scopes\n",
+							"\n",
+							"## Learning Objectives\n",
+							"By the end of these lessons, you should be able to:\n",
+							"* Configure Databricks to access Key Vault secrets\n",
+							"* Read and write data directly from Blob Storage using secrets stored in Key Vault\n",
+							"* Set different levels of access permission using SAS at the Storage service level\n",
+							"* Mount Blob Storage into DBFS\n",
+							"* Describe how mounting impacts secure access to data\n",
+							"\n",
+							"The overall goal of these three notebooks is to read and write data directly from Blob Storage using secrets stored in a Key Vault, accessed securely through the Databricks Secrets utility.\n",
+							"\n",
+							"This goal has been broken into 3 notebooks to make each step more digestible:\n",
+							"1. 03a - Blob Storage - In the first notebook, we will add a file to a Blob on a Storage Account and generate SAS tokens with different permissions levels\n",
+							"1. 03b - Key Vault - In the second notebook, we will configure an Azure Key Vault Access Policy and add text-based credentials as secrets\n",
+							"1. 03c - Key Vault Backed Secret Scopes - In the third notebook, we will define a Secret Scope in Databircks by linking to the Key Vault and use the previously stored credentials to read and write from the Storage Container\n",
+							"\n",
+							"### Online Resources\n",
+							"\n",
+							"- [Azure Databricks Secrets](https://docs.azuredatabricks.net/user-guide/secrets/index.html)\n",
+							"- [Azure Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/key-vault-whatis)\n",
+							"- [Azure Databricks DBFS](https://docs.azuredatabricks.net/user-guide/dbfs-databricks-file-system.html)\n",
+							"- [Introduction to Azure Blob storage](https://docs.microsoft.com/en-us/azure/storage/blobs/storage-blobs-introduction)\n",
+							"- [Databricks with Azure Blob Storage](https://docs.databricks.com/spark/latest/data-sources/azure/azure-storage.html)\n",
+							"- [Azure Data Lake Storage Gen1](https://docs.azuredatabricks.net/spark/latest/data-sources/azure/azure-datalake.html#mount-azure-data-lake)\n",
+							"- [Azure Data Lake Storage Gen2](https://docs.databricks.com/spark/latest/data-sources/azure/azure-datalake-gen2.html)"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"##![Spark Logo Tiny](https://files.training.databricks.com/images/105/logo_spark_tiny.png) 03c - Key Vault Backed Secret Scopes\n",
+							"\n",
+							"In this notebook, we will use the Secret Scopes API to securely connect to the Key Vault. The Secret Scopes API will allow us to use the Blob Storage SAS tokens, stored as Secrets in the Key Vault, to read and write data from Blob Storage.\n",
+							"\n",
+							"### Learning Objectives\n",
+							"By the end of this lesson, you should be able to:\n",
+							"- Create a Secret Scope connected to Azure Key Vault\n",
+							"- Mount Blob Storage to DBFS using a SAS token\n",
+							"- Write data to Blob using a SAS token in Spark Configuration"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### Classroom setup\n",
+							"\n",
+							"A quick script to define a username variable in Python and Scala."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%run ./Includes/User-Name"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"\n",
+							"## Access Azure Databricks Secrets UI\n",
+							"\n",
+							"Now that you have an instance of Azure Key Vault up and running, it is time to let Azure Databricks know how to connect to it.\n",
+							"\n",
+							"The first step is to open a new web browser tab and navigate to `https://&lt;your_azure_databricks_url&gt;#secrets/createScope`\n",
+							"\n",
+							"<img alt=\"Side Note\" title=\"Side Note\" style=\"vertical-align: text-bottom; position: relative; height:1.75em; top:0.05em; transform:rotate(15deg)\" src=\"https://files.training.databricks.com/static/images/icon-note.webp\"/> The number after the `?o=` is the unique workspace identifier; append `#secrets/createScope` to this.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/db-secrets.png\" width=800px />"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Link Azure Databricks to Key Vault\n",
+							"We'll be copy/pasting some values from the Azure Portal to this UI.\n",
+							"\n",
+							"In the Azure Portal on your Key Vault tab:\n",
+							"1. Go to properties\n",
+							"2. Copy and paste the DNS Name\n",
+							"3. Copy and paste the Resource ID\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/properties.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Add configuration values to the Databricks Secret Scope UI that you copied from the Azure Key Vault\n",
+							"\n",
+							"\n",
+							"In the Databricks Secrets UI:\n",
+							"\n",
+							"1. Enter the name of the secret scope; here, we'll use `students`.\n",
+							"2. Paste the DNS Name\n",
+							"3. Paste the Resource ID\n",
+							"4. Click \"Create\"\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/db-secrets-complete.png\" />\n",
+							"\n",
+							"  > MANAGE permission allows users to read and write to this secret scope, and, in the case of accounts on the Azure Databricks Premium Plan, to change permissions for the scope.\n",
+							"\n",
+							"  > Your account must have the Azure Databricks Premium Plan for you to be able to select Creator. This is the recommended approach: grant MANAGE permission to the Creator when you create the secret scope, and then assign more granular access permissions after you have tested the scope."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Apply Changes\n",
+							"\n",
+							"After a moment, you will see a dialog verifying that the secret scope has been created. Click \"Ok\" to close the box.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/db-secrets-confirm.png\" />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"### List Secret Scopes\n",
+							"\n",
+							"To list the existing secret scopes the `dbutils.secrets` utility can be used.\n",
+							"\n",
+							"You can list all scopes currently available in your workspace with:"
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							}
+						},
+						"source": [
+							"%%pyspark\n",
+							"dbutils.secrets.listScopes()"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### List Secrets within a specific scope\n",
+							"\n",
+							"\n",
+							"To list the secrets within a specific scope, you can supply that scope name."
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							}
+						},
+						"source": [
+							"%%pyspark\n",
+							"dbutils.secrets.list(\"students\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Using your Secrets\n",
+							"\n",
+							"To use your secrets, you supply the scope and key to the `get` method.\n",
+							"\n",
+							"Run the following cell to retrieve and print a secret."
+						]
+					},
+					{
+						"cell_type": "code",
+						"metadata": {
+							"microsoft": {
+								"language": "python"
+							}
+						},
+						"source": [
+							"%%pyspark\n",
+							"print(dbutils.secrets.get(scope=\"students\", key=\"storageread\"))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Secrets are not displayed in clear text\n",
+							"\n",
+							"Notice that the value when printed out is `[REDACTED]`. This is to prevent your secrets from being exposed."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Mount Azure Blob Container - Read/List\n",
+							"\n",
+							"In this section, we'll demonstrating using a `SASTOKEN` that only has list and read permissions managed at the Storage Account level.\n",
+							"\n",
+							"**This means:**\n",
+							"- Any user within the workspace can view and read the files mounted using this key\n",
+							"- This key can be used to mount any container within the storage account with these privileges"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"# Unmount directory if previously mounted.\n",
+							"MOUNTPOINT = \"/mnt/commonfiles\"\n",
+							"if MOUNTPOINT in [mnt.mountPoint for mnt in dbutils.fs.mounts()]:\n",
+							"  dbutils.fs.unmount(MOUNTPOINT)\n",
+							"\n",
+							"# Add the Storage Account, Container, and reference the secret to pass the SAS Token\n",
+							"STORAGE_ACCOUNT = dbutils.secrets.get(scope=\"students\", key=\"storageaccount\")\n",
+							"CONTAINER = \"commonfiles\"\n",
+							"SASTOKEN = dbutils.secrets.get(scope=\"students\", key=\"storageread\")\n",
+							"\n",
+							"# Do not change these values\n",
+							"SOURCE = \"wasbs://{container}@{storage_acct}.blob.core.windows.net/\".format(container=CONTAINER, storage_acct=STORAGE_ACCOUNT)\n",
+							"URI = \"fs.azure.sas.{container}.{storage_acct}.blob.core.windows.net\".format(container=CONTAINER, storage_acct=STORAGE_ACCOUNT)\n",
+							"\n",
+							"try:\n",
+							"  dbutils.fs.mount(\n",
+							"    source=SOURCE,\n",
+							"    mount_point=MOUNTPOINT,\n",
+							"    extra_configs={URI:SASTOKEN})\n",
+							"except Exception as e:\n",
+							"  if \"Directory already mounted\" in str(e):\n",
+							"    pass # Ignore error if already mounted.\n",
+							"  else:\n",
+							"    raise e\n",
+							"\n",
+							"display(dbutils.fs.ls(MOUNTPOINT))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Define and display a Dataframe that reads a file from the mounted directory"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"salesDF = (spark.read\n",
+							"              .option(\"header\", True)\n",
+							"              .option(\"inferSchema\", True)\n",
+							"              .csv(MOUNTPOINT + \"/sales.csv\"))\n",
+							"\n",
+							"display(salesDF)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Filter the Dataframe and display the results"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.functions import col\n",
+							"\n",
+							"sales2004DF = salesDF.filter(\n",
+							"    (col(\"ShipDateKey\") > 20031231) & (col(\"ShipDateKey\") <= 20041231)\n",
+							")\n",
+							"display(sales2004DF)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Details....\n",
+							"\n",
+							"\n",
+							"While we can list and read files with this token, our job will abort when we try to write."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"try:\n",
+							"  sales2004DF.write.mode(\"overwrite\").parquet(MOUNTPOINT + \"/sales2004\")\n",
+							"except Exception as e:\n",
+							"  print(e)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Review\n",
+							"\n",
+							"At this point you should see how to:\n",
+							"* Use Secrets to access blobstorage\n",
+							"* Mount the blobstore to dbfs (Data Bricks File System)\n",
+							"\n",
+							"Mounting data to dbfs makes that content available to anyone in that workspace.\n",
+							"\n",
+							"If you want to access blob store directly without mounting the rest of the notebook demonstrate that process."
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Writing Directly to Blob using SAS token\n",
+							"\n",
+							"Note that when you mount a directory, by default, all users within the workspace will have the same privileges to interact with that directory. Here, we'll look at using a SAS token to directly write to a blob (without mounting). This ensures that only users with the workspace that have access to the associated key vault will be able to write."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"spark.conf.set(URI, dbutils.secrets.get(scope=\"students\", key=\"storagewrite\"))"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Listing Directory Contents and writing using SAS token\n",
+							"\n",
+							"Because the configured container SAS gives us full permissions, we can interact with the blob storage using our `dbutils.fs` methods."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.ls(SOURCE)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"We can write to this blob directly, without exposing this mount to others in our workspace."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"sales2004DF.write.mode(\"overwrite\").parquet(SOURCE + \"/sales2004\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.ls(SOURCE)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Deleting using SAS token\n",
+							"\n",
+							"This scope also has delete permissions."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"dbutils.fs.rm(SOURCE + \"/sales2004\", True)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"### Cleaning up mounts\n",
+							"\n",
+							"If you don't explicitly unmount, the read-only blob that you mounted at the beginning of this notebook will remain accessible in your workspace."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"if MOUNTPOINT in [mnt.mountPoint for mnt in dbutils.fs.mounts()]:\n",
+							"  dbutils.fs.unmount(MOUNTPOINT)"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Congratulations!\n",
+							"\n",
+							"You should now be able to use the following tools in your workspace:\n",
+							"\n",
+							"* Databricks Secrets\n",
+							"* Azure Key Vault\n",
+							"* SAS token\n",
+							"* dbutils.mount"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/key-vault')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/resources"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "6fe99373-d522-44d4-862f-47da23a8f024"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"\n",
+							"%md-sandbox\n",
+							"\n",
+							"<div style=\"text-align: center; line-height: 0; padding-top: 9px;\">\n",
+							"  <img src=\"https://databricks.com/wp-content/uploads/2018/03/db-academy-rgb-1200px.png\" alt=\"Databricks Learning\" style=\"width: 600px\">\n",
+							"</div>"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"#![Spark Logo Tiny](https://files.training.databricks.com/images/105/logo_spark_tiny.png) Key Vault-Backed Secret Scopes\n",
+							"\n",
+							"## Learning Objectives\n",
+							"By the end of these lessons, you should be able to:\n",
+							"* Configure Databricks to access Key Vault secrets\n",
+							"* Read and write data directly from Blob Storage using secrets stored in Key Vault\n",
+							"* Set different levels of access permission using SAS at the Storage service level\n",
+							"* Mount Blob Storage into DBFS\n",
+							"* Describe how mounting impacts secure access to data\n",
+							"\n",
+							"The overall goal of these three notebooks is to read and write data directly from Blob Storage using secrets stored in a Key Vault, accessed securely through the Databricks Secrets utility.\n",
+							"\n",
+							"This goal has been broken into 3 notebooks to make each step more digestible:\n",
+							"1. 03a - Blob Storage - In the first notebook, we will add a file to a Blob on a Storage Account and generate SAS tokens with different permissions levels\n",
+							"1. 03b - Key Vault - In the second notebook, we will configure an Azure Key Vault Access Policy and add text-based credentials as secrets\n",
+							"1. 03c - Key Vault Backed Secret Scopes - In the third notebook, we will define a Secret Scope in Databircks by linking to the Key Vault and use the previously stored credentials to read and write from the Storage Container"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"##![Spark Logo Tiny](https://files.training.databricks.com/images/105/logo_spark_tiny.png) 03b - Key Vault\n",
+							"\n",
+							"[Azure Key Vault](https://docs.microsoft.com/en-us/azure/key-vault/key-vault-whatis) provides us with a number of options for storing and sharing secrets and keys between Azure applications, and has direct integration with Azure Databricks. In this notebook, we'll focus on configuring an access policy and creating Secrets. These instructions are based around configurations and settings for the ADB Core partner training, but should be adaptable to production requirements.\n",
+							"\n",
+							"**This is something that will generally be handled by the workspace adminstrator.** Only individuals with proper permissions in the Azure Active Directory will be able to link a Key Vault to the Databricks workspace. (Each Key Vault will map to a \"scope\" in Databricks, so enterprise solutions may have many different Key Vaults for different teams/personas who need different permissions.)\n",
+							"\n",
+							"### Learning Objectives\n",
+							"By the end of this lesson, you should be able to:\n",
+							"- Configure Key Vault Access Policies\n",
+							"- Create Secrets that store SAS Tokens in a Key Vault"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"\n",
+							"<img alt=\"Caution\" title=\"Caution\" style=\"vertical-align: text-bottom; position: relative; height:1.3em; top:0.0em\" src=\"https://files.training.databricks.com/static/images/icon-warning.svg\"/> **PLEASE** open a new browser tab and navigate to <https://portal.azure.com>."
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Configure Key Vault Access Policies\n",
+							"\n",
+							"1. Go to \"All resources\"\n",
+							"2. Click on the Key Vault resource\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/resources-kv.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Navigate to Access Policies\n",
+							"\n",
+							"First, click on `Access policies` in the left-side plane.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/keyvault-home.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"## Add Access Policy to Key Vault\n",
+							"\n",
+							"While our user is a \"Contributor\" on this resource, we must add an access policy to add/list/use secrets.\n",
+							"\n",
+							"Click \"Add access policy\"\n",
+							"\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/access-none.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"1. Select \"Key, Secret, & Certificate Mangement\" from the dropdown\n",
+							"2. Click to select a principal\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/access-template.png\" />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"1. Search for your user ID\n",
+							"2. Click on the matching result to select\n",
+							"3. Click \"Select\"\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/access-principal.png\" />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"Now you'll need to click \"Add\" and then...\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/access-not-added.png\" />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Save Configuration Changes\n",
+							"\n",
+							"... you'll click \"Save\" to finalize the configurations.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/access-not-saved.png\" />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Congratulations!\n",
+							"\n",
+							"**At this point you have**\n",
+							"* Modified Access Policies in the Azure Key Vault\n",
+							"\n",
+							"### Next Steps\n",
+							"\n",
+							"**Your next steps are to:**\n",
+							"* Create Secrets in the Key Vault"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Create secrets in Key Vault\n",
+							"\n",
+							"To create secrets in Key Vault that can be accessed from your new secret scope in Databricks, you need to either use the Azure portal or the Key Vault CLI. For simplicity's sake, we will use the Azure portal:\n",
+							"\n",
+							"1. Select **Secrets** in the left-hand menu.\n",
+							"2. Select **+ Generate/Import** in the Secrets toolbar.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/secrets-none.png\" width=800px />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Create a storageread Secret\n",
+							"\n",
+							"In the next blade:\n",
+							"\n",
+							"* Enter the name of the secret\n",
+							"  * For the `Name` field, enter **storageread**\n",
+							"  * This will be the key to access the secret value; this will be visible in plain text\n",
+							"* Paste/enter the value for the secret\n",
+							"   * For the `Value` field, enter the **read-only SAS token** from the previous notebook.\n",
+							"   * This will be the value that is stored as a secret; this will be `[REDACTED]`.\n",
+							"* Click \"Create\"\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/storageread.png\" />"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Create a storagewrite Secret\n",
+							"\n",
+							"You should see one secret now in your vault.\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/secrets-1.png\" width=800px />\n",
+							"\n",
+							"You want to \"Generate/Import\" another secret.\n",
+							"\n",
+							"* Enter the name of the secret\n",
+							"  * For the `Name` field, enter **storagewrite**\n",
+							"  * This will be the key to access the secret value; this will be visible in plain text\n",
+							"* Paste/enter the value for the secret\n",
+							"   * For the `Value` field, enter the **full permissions SAS token** from the previous notebook.\n",
+							"   * This will be the value that is stored as a secret; this will be `[REDACTED]`.\n",
+							"* Click \"Create\""
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Create a storageaccount Secret\n",
+							"\n",
+							"Finally, you'll create one more secret.\n",
+							"\n",
+							"1. Name: `storageaccount`\n",
+							"2. Value: copy/paste the name of your storage account\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-blob/account-name.png\"/>"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Return to the list view in the Azure Portal\n",
+							"\n",
+							"When you're done, you should see the following keys:\n",
+							"\n",
+							"<img src=\"https://files.training.databricks.com/images/adbcore/config-keyvault/secrets-all.png\" width=800px/>"
+						]
+					},
+					{
+						"cell_type": "markdown",
+						"source": [
+							"\n",
+							"## Congratulations!\n",
+							"\n",
+							"You have:\n",
+							"* Modified Access Policies in the Azure Key Vault\n",
+							"* Create Secrets in the Key Vault that use SAS tokens\n",
+							"\n",
+							"In this notebook, we stored the SAS tokens from the first notebook as Secrets in the Key Vault. In the next notebook, we will see how to connect Databricks to the Key Vault and access the SAS tokens to read and write from Blob Storage."
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"%md-sandbox\n",
+							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
+							"Apache, Apache Spark, Spark and the Spark logo are trademarks of the <a href=\"http://www.apache.org/\">Apache Software Foundation</a>.<br/>\n",
+							"<br/>\n",
+							"<a href=\"https://databricks.com/privacy-policy\">Privacy Policy</a> | <a href=\"https://databricks.com/terms-of-use\">Terms of Use</a> | <a href=\"http://help.databricks.com/\">Support</a>"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/operations')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines/includes/main/python"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "69e1b426-7aa5-4cec-a320-bb8026226ea5"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"from delta.tables import DeltaTable\n",
+							"from pyspark.sql import DataFrame\n",
+							"from pyspark.sql.functions import (\n",
+							"    col,\n",
+							"    current_timestamp,\n",
+							"    from_json,\n",
+							"    from_unixtime,\n",
+							"    lag,\n",
+							"    lead,\n",
+							"    lit,\n",
+							"    mean,\n",
+							"    stddev,\n",
+							"    max,\n",
+							")\n",
+							"from pyspark.sql.session import SparkSession\n",
+							"from pyspark.sql.streaming import DataStreamWriter\n",
+							"from pyspark.sql.window import Window"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def create_stream_writer(\n",
+							"    dataframe: DataFrame,\n",
+							"    checkpoint: str,\n",
+							"    name: str,\n",
+							"    partition_column: str = None,\n",
+							"    mode: str = \"append\",\n",
+							") -> DataStreamWriter:\n",
+							"\n",
+							"    stream_writer = (\n",
+							"        dataframe.writeStream.format(\"delta\")\n",
+							"        .outputMode(mode)\n",
+							"        .option(\"checkpointLocation\", checkpoint)\n",
+							"        .queryName(name)\n",
+							"    )\n",
+							"    if partition_column is not None:\n",
+							"        return stream_writer.partitionBy(partition_column)\n",
+							"    return stream_writer\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def read_stream_delta(spark: SparkSession, deltaPath: str) -> DataFrame:\n",
+							"    return spark.readStream.format(\"delta\").load(deltaPath)\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def read_stream_raw(spark: SparkSession, rawPath: str) -> DataFrame:\n",
+							"    kafka_schema = \"value STRING\"\n",
+							"    return spark.readStream.format(\"text\").schema(kafka_schema).load(rawPath)\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def update_silver_table(spark: SparkSession, silverPath: str) -> bool:\n",
+							"\n",
+							"    update_match = \"\"\"\n",
+							"    health_tracker.eventtime = updates.eventtime\n",
+							"    AND\n",
+							"    health_tracker.device_id = updates.device_id\n",
+							"  \"\"\"\n",
+							"\n",
+							"    update = {\"heartrate\": \"updates.heartrate\"}\n",
+							"\n",
+							"    dateWindow = Window.orderBy(\"p_eventdate\")\n",
+							"\n",
+							"    interpolatedDF = spark.read.table(\"health_tracker_plus_silver\").select(\n",
+							"        \"*\",\n",
+							"        lag(col(\"heartrate\")).over(dateWindow).alias(\"prev_amt\"),\n",
+							"        lead(col(\"heartrate\")).over(dateWindow).alias(\"next_amt\"),\n",
+							"    )\n",
+							"\n",
+							"    updatesDF = interpolatedDF.where(col(\"heartrate\") < 0).select(\n",
+							"        \"device_id\",\n",
+							"        ((col(\"prev_amt\") + col(\"next_amt\")) / 2).alias(\"heartrate\"),\n",
+							"        \"eventtime\",\n",
+							"        \"name\",\n",
+							"        \"p_eventdate\",\n",
+							"    )\n",
+							"\n",
+							"    silverTable = DeltaTable.forPath(spark, silverPath)\n",
+							"\n",
+							"    (\n",
+							"        silverTable.alias(\"health_tracker\")\n",
+							"        .merge(updatesDF.alias(\"updates\"), update_match)\n",
+							"        .whenMatchedUpdate(set=update)\n",
+							"        .execute()\n",
+							"    )\n",
+							"\n",
+							"    return True\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def transform_bronze(bronze: DataFrame) -> DataFrame:\n",
+							"\n",
+							"    json_schema = \"device_id INTEGER, heartrate DOUBLE, name STRING, time FLOAT\"\n",
+							"\n",
+							"    return (\n",
+							"        bronze.select(from_json(col(\"value\"), json_schema).alias(\"nested_json\"))\n",
+							"        .select(\"nested_json.*\")\n",
+							"        .select(\n",
+							"            \"device_id\",\n",
+							"            \"heartrate\",\n",
+							"            from_unixtime(\"time\").cast(\"timestamp\").alias(\"eventtime\"),\n",
+							"            \"name\",\n",
+							"            from_unixtime(\"time\").cast(\"date\").alias(\"p_eventdate\"),\n",
+							"        )\n",
+							"    )\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def transform_raw(df: DataFrame) -> DataFrame:\n",
+							"    return df.select(\n",
+							"        lit(\"files.training.databricks.com\").alias(\"datasource\"),\n",
+							"        current_timestamp().alias(\"ingesttime\"),\n",
+							"        \"value\",\n",
+							"        current_timestamp().cast(\"date\").alias(\"p_ingestdate\"),\n",
+							"    )\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def transform_silver_mean_agg(silver: DataFrame) -> DataFrame:\n",
+							"    return silver.groupBy(\"device_id\").agg(\n",
+							"        mean(col(\"heartrate\")).alias(\"mean_heartrate\"),\n",
+							"        stddev(col(\"heartrate\")).alias(\"std_heartrate\"),\n",
+							"        max(col(\"heartrate\")).alias(\"max_heartrate\"),\n",
+							"    )\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def transform_silver_mean_agg_last_thirty(silver: DataFrame) -> DataFrame:\n",
+							"    health_tracker_gold_aggregate_heartrate = spark.read.table(\n",
+							"        \"health_tracker_gold_aggregate_heartrate\"\n",
+							"    )\n",
+							"    return silver.join(\n",
+							"        spark.read.table(\"health_tracker_gold_aggregate_heartrate\"), \"device_id\"\n",
+							"    ).where(\"p_eventdate > cast('2020-03-01' AS DATE) - 30\")"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/operations_v2')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines/includes/main/python"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "22f6101e-6e17-4016-a9fd-43e423d22127"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "python"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"from delta.tables import DeltaTable\n",
+							"from pyspark.sql import DataFrame\n",
+							"from pyspark.sql.functions import (\n",
+							"    col,\n",
+							"    current_timestamp,\n",
+							"    from_json,\n",
+							"    from_unixtime,\n",
+							"    lag,\n",
+							"    lead,\n",
+							"    lit,\n",
+							"    mean,\n",
+							"    stddev,\n",
+							"    max,\n",
+							")\n",
+							"from pyspark.sql.session import SparkSession\n",
+							"from pyspark.sql.streaming import DataStreamWriter\n",
+							"from pyspark.sql.window import Window"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def create_stream_writer(\n",
+							"    dataframe: DataFrame,\n",
+							"    checkpoint: str,\n",
+							"    name: str,\n",
+							"    partition_column: str,\n",
+							"    mode: str = \"append\",\n",
+							"    mergeSchema: bool = False,\n",
+							") -> DataStreamWriter:\n",
+							"\n",
+							"    stream_writer = (\n",
+							"        dataframe.writeStream.format(\"delta\")\n",
+							"        .outputMode(mode)\n",
+							"        .option(\"checkpointLocation\", checkpoint)\n",
+							"        .partitionBy(partition_column)\n",
+							"        .queryName(name)\n",
+							"    )\n",
+							"\n",
+							"    if mergeSchema:\n",
+							"        stream_writer = stream_writer.option(\"mergeSchema\", True)\n",
+							"    if partition_column is not None:\n",
+							"        stream_writer = stream_writer.partitionBy(partition_column)\n",
+							"    return stream_writer\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def read_stream_delta(spark: SparkSession, deltaPath: str) -> DataFrame:\n",
+							"    return spark.readStream.format(\"delta\").load(deltaPath)\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def read_stream_raw(spark: SparkSession, rawPath: str) -> DataFrame:\n",
+							"    kafka_schema = \"value STRING\"\n",
+							"    return spark.readStream.format(\"text\").schema(kafka_schema).load(rawPath)\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def update_silver_table(spark: SparkSession, silverPath: str) -> bool:\n",
+							"\n",
+							"    update_match = \"\"\"\n",
+							"    health_tracker.eventtime = updates.eventtime\n",
+							"    AND\n",
+							"    health_tracker.device_id = updates.device_id\n",
+							"  \"\"\"\n",
+							"\n",
+							"    update = {\"heartrate\": \"updates.heartrate\"}\n",
+							"\n",
+							"    dateWindow = Window.orderBy(\"p_eventdate\")\n",
+							"\n",
+							"    interpolatedDF = spark.read.table(\"health_tracker_plus_silver\").select(\n",
+							"        \"*\",\n",
+							"        lag(col(\"heartrate\")).over(dateWindow).alias(\"prev_amt\"),\n",
+							"        lead(col(\"heartrate\")).over(dateWindow).alias(\"next_amt\"),\n",
+							"    )\n",
+							"\n",
+							"    updatesDF = interpolatedDF.where(col(\"heartrate\") < 0).select(\n",
+							"        \"device_id\",\n",
+							"        ((col(\"prev_amt\") + col(\"next_amt\")) / 2).alias(\"heartrate\"),\n",
+							"        \"eventtime\",\n",
+							"        \"name\",\n",
+							"        \"p_eventdate\",\n",
+							"    )\n",
+							"\n",
+							"    silverTable = DeltaTable.forPath(spark, silverPath)\n",
+							"\n",
+							"    (\n",
+							"        silverTable.alias(\"health_tracker\")\n",
+							"        .merge(updatesDF.alias(\"updates\"), update_match)\n",
+							"        .whenMatchedUpdate(set=update)\n",
+							"        .execute()\n",
+							"    )\n",
+							"\n",
+							"    return True\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def transform_bronze(bronze: DataFrame) -> DataFrame:\n",
+							"\n",
+							"    json_schema = \"device_id INTEGER, heartrate DOUBLE, device_type STRING, name STRING, time FLOAT\"\n",
+							"\n",
+							"    return (\n",
+							"        bronze.select(from_json(col(\"value\"), json_schema).alias(\"nested_json\"))\n",
+							"        .select(\"nested_json.*\")\n",
+							"        .select(\n",
+							"            \"device_id\",\n",
+							"            \"device_type\",\n",
+							"            \"heartrate\",\n",
+							"            from_unixtime(\"time\").cast(\"timestamp\").alias(\"eventtime\"),\n",
+							"            \"name\",\n",
+							"            from_unixtime(\"time\").cast(\"date\").alias(\"p_eventdate\"),\n",
+							"        )\n",
+							"    )\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def transform_raw(raw: DataFrame) -> DataFrame:\n",
+							"    return raw.select(\n",
+							"        lit(\"files.training.databricks.com\").alias(\"datasource\"),\n",
+							"        current_timestamp().alias(\"ingesttime\"),\n",
+							"        \"value\",\n",
+							"        current_timestamp().cast(\"date\").alias(\"p_ingestdate\"),\n",
+							"    )\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def transform_silver_mean_agg(silver: DataFrame) -> DataFrame:\n",
+							"    return silver.groupBy(\"device_id\").agg(\n",
+							"        mean(col(\"heartrate\")).alias(\"mean_heartrate\"),\n",
+							"        stddev(col(\"heartrate\")).alias(\"std_heartrate\"),\n",
+							"        max(col(\"heartrate\")).alias(\"max_heartrate\"),\n",
+							"    )"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/test_operations')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines/includes/test/python"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('test_operations_properties_bigDataPool_referenceName')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "31ff4d5f-2f24-43bd-985b-1e24414f1dec"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/356cc0b4-92be-42c1-8585-6182d784d5eb/resourceGroups/mdwdops-imdmo-dev-rg/providers/Microsoft.Synapse/workspaces/sywsdevimdmo/bigDataPools/synspdevimdmo",
+						"name": "synspdevimdmo",
+						"type": "Spark",
+						"endpoint": "https://sywsdevimdmo.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synspdevimdmo",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "2.4",
+						"nodeCount": 10,
+						"cores": 4,
+						"memory": 28
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "markdown",
+						"source": [
+							"# Unit Tests for Operations"
+						]
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"import pytest\n",
+							"from pyspark.sql import SparkSession\n",
+							"from pyspark.sql.types import *"
+						],
+						"outputs": [],
+						"execution_count": 1
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark import sql\n",
+							"\n",
+							"\"\"\"\n",
+							"For local testing it is necessary to instantiate the Spark Session in order to have \n",
+							"Delta Libraries installed prior to import in the next cell\n",
+							"\"\"\"\n",
+							"\n",
+							"spark = sql.SparkSession.builder.master(\"local[8]\").getOrCreate()"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"from main.python.operations import transform_raw"
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"@pytest.fixture(scope=\"session\")\n",
+							"def spark_session(request):\n",
+							"    \"\"\"Fixture for creating a spark context.\"\"\"\n",
+							"    request.addfinalizer(lambda: spark.stop())\n",
+							"\n",
+							"    return spark\n",
+							""
+						],
+						"outputs": [],
+						"execution_count": null
+					},
+					{
+						"cell_type": "code",
+						"source": [
+							"def test_transform_raw(spark_session: SparkSession):\n",
+							"    testDF = spark_session.createDataFrame(\n",
+							"        [\n",
+							"            (\n",
+							"                '{\"device_id\":0,\"heartrate\":52.8139067501,\"name\":\"Deborah Powell\",\"time\":1.5778368E9}',\n",
+							"            ),\n",
+							"            (\n",
+							"                '{\"device_id\":0,\"heartrate\":53.9078900098,\"name\":\"Deborah Powell\",\"time\":1.5778404E9}',\n",
+							"            ),\n",
+							"            (\n",
+							"                '{\"device_id\":0,\"heartrate\":52.7129593616,\"name\":\"Deborah Powell\",\"time\":1.577844E9}',\n",
+							"            ),\n",
+							"            (\n",
+							"                '{\"device_id\":0,\"heartrate\":52.2880422685,\"name\":\"Deborah Powell\",\"time\":1.5778476E9}',\n",
+							"            ),\n",
+							"            (\n",
+							"                '{\"device_id\":0,\"heartrate\":52.5156095386,\"name\":\"Deborah Powell\",\"time\":1.5778512E9}',\n",
+							"            ),\n",
+							"            (\n",
+							"                '{\"device_id\":0,\"heartrate\":53.6280743846,\"name\":\"Deborah Powell\",\"time\":1.5778548E9}',\n",
+							"            ),\n",
+							"        ],\n",
+							"        schema=\"value STRING\",\n",
+							"    )\n",
+							"    transformedDF = transform_raw(testDF)\n",
+							"    assert transformedDF.schema == StructType(\n",
+							"        [\n",
+							"            StructField(\"datasource\", StringType(), False),\n",
+							"            StructField(\"ingesttime\", TimestampType(), False),\n",
+							"            StructField(\"value\", StringType(), True),\n",
+							"            StructField(\"p_ingestdate\", DateType(), False),\n",
+							"        ]\n",
+							"    )"
+						],
+						"outputs": [],
+						"execution_count": null
+					}
+				]
+			},
+			"dependsOn": []
+		},
+		{
+			"name": "[concat(parameters('workspaceName'), '/utilities')]",
+			"type": "Microsoft.Synapse/workspaces/notebooks",
+			"apiVersion": "2019-06-01-preview",
+			"properties": {
+				"folder": {
+					"name": "Delta/pipelines/includes"
+				},
+				"nbformat": 4,
+				"nbformat_minor": 2,
+				"bigDataPool": {
+					"referenceName": "[parameters('utilities_properties_bigDataPool_referenceName')]",
+					"type": "BigDataPoolReference"
+				},
+				"sessionProperties": {
+					"driverMemory": "56g",
+					"driverCores": 8,
+					"executorMemory": "56g",
+					"executorCores": 8,
+					"numExecutors": 1,
+					"conf": {
+						"spark.dynamicAllocation.enabled": "true",
+						"spark.dynamicAllocation.minExecutors": "1",
+						"spark.dynamicAllocation.maxExecutors": "1",
+						"spark.autotune.trackingId": "0ea356ff-c9c1-48f9-b835-3a5b7b7a79f4"
+					}
+				},
+				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
+					"kernelspec": {
+						"name": "synapse_pyspark",
+						"display_name": "Synapse PySpark"
+					},
+					"language_info": {
+						"name": "python"
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/356cc0b4-92be-42c1-8585-6182d784d5eb/resourceGroups/mdwdops-imdmo-dev-rg/providers/Microsoft.Synapse/workspaces/sywsdevimdmo/bigDataPools/imsparkpool3",
+						"name": "imsparkpool3",
+						"type": "Spark",
+						"endpoint": "https://sywsdevimdmo.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/imsparkpool3",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "3.1",
+						"nodeCount": 4,
+						"cores": 8,
+						"memory": 56
+					},
+					"sessionKeepAliveTimeout": 30
+				},
+				"cells": [
+					{
+						"cell_type": "code",
+						"source": [
+							"from pyspark.sql.session import SparkSession\n",
+							"from urllib.request import urlretrieve\n",
+							"import time\n",
+							"\n",
+							"BASE_URL = \"https://files.training.databricks.com/static/data/health-tracker/\"\n",
+							"\n",
+							"\n",
+							"def retrieve_data(year: int, month: int, raw_path: str, is_late: bool = False) -> bool:\n",
+							"    file, dbfsPath, driverPath = _generate_file_handles(year, month, raw_path, is_late)\n",
+							"    uri = BASE_URL + file\n",
+							"\n",
+							"    urlretrieve(uri, file)\n",
+							"    dbutils.fs.mv(driverPath, dbfsPath)\n",
+							"    return True\n",
+							"\n",
+							"\n",
+							"def _generate_file_handles(year: int, month: int, raw_path: str, is_late: bool):\n",
+							"    late = \"\"\n",
+							"    if is_late:\n",
+							"        late = \"_late\"\n",
+							"    file = f\"health_tracker_data_{year}_{month}{late}.json\"\n",
+							"\n",
+							"    dbfsPath = raw_path\n",
+							"    if is_late:\n",
+							"        dbfsPath += \"late/\"\n",
+							"    dbfsPath += file\n",
+							"\n",
+							"    driverPath = \"file:/databricks/driver/\" + file\n",
+							"\n",
+							"    return file, dbfsPath, driverPath\n",
+							"\n",
+							"\n",
+							"def stop_all_streams() -> bool:\n",
+							"    stopped = False\n",
+							"    for stream in spark.streams.active:\n",
+							"        stopped = True\n",
+							"        stream.stop()\n",
+							"    return stopped\n",
+							"\n",
+							"\n",
+							"def stop_named_stream(spark: SparkSession, namedStream: str) -> bool:\n",
+							"    stopped = False\n",
+							"    for stream in spark.streams.active:\n",
+							"        if stream.name == namedStream:\n",
+							"            stopped = True\n",
+							"            stream.stop()\n",
+							"    return stopped\n",
+							"\n",
+							"\n",
+							"def untilStreamIsReady(namedStream: str, progressions: int = 3) -> bool:\n",
+							"    queries = list(filter(lambda query: query.name == namedStream, spark.streams.active))\n",
+							"    while len(queries) == 0 or len(queries[0].recentProgress) < progressions:\n",
+							"        time.sleep(5)\n",
+							"        queries = list(filter(lambda query: query.name == namedStream, spark.streams.active))\n",
+							"    print(\"The stream {} is active and ready.\".format(namedStream))\n",
+							"    return True"
+						],
+						"outputs": [],
+						"execution_count": 1
 					}
 				]
 			},

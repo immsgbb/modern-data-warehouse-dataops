@@ -62,6 +62,15 @@
 		},
 		"03_transform_properties_bigDataPool_referenceName": {
 			"value": "synspdevimdmo"
+		},
+		"configuration_properties_bigDataPool_referenceName": {
+			"value": "imsparkpool3"
+		},
+		"test_operations_properties_bigDataPool_referenceName": {
+			"value": "synspdevimdmo"
+		},
+		"utilities_properties_bigDataPool_referenceName": {
+			"value": "imsparkpool3"
 		}
 	}
 }
