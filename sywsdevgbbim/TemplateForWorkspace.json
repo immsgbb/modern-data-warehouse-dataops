@@ -84,7 +84,7 @@
 		},
 		"00_ingest_raw_properties_bigDataPool_referenceName": {
 			"type": "string",
-			"defaultValue": "imsparkpool3"
+			"defaultValue": "synspdevgbbim"
 		},
 		"00_setup_properties_bigDataPool_referenceName": {
 			"type": "string",
@@ -1097,16 +1097,16 @@
 					"type": "BigDataPoolReference"
 				},
 				"sessionProperties": {
-					"driverMemory": "56g",
-					"driverCores": 8,
-					"executorMemory": "56g",
-					"executorCores": 8,
-					"numExecutors": 1,
+					"driverMemory": "28g",
+					"driverCores": 4,
+					"executorMemory": "28g",
+					"executorCores": 4,
+					"numExecutors": 2,
 					"conf": {
-						"spark.dynamicAllocation.enabled": "true",
-						"spark.dynamicAllocation.minExecutors": "1",
-						"spark.dynamicAllocation.maxExecutors": "1",
-						"spark.autotune.trackingId": "5d976085-6320-4046-a558-7f771170b12b"
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "0a01972f-879c-4c3a-bbb7-430981db5f8d"
 					}
 				},
 				"metadata": {
@@ -1120,30 +1120,33 @@
 						"name": "python"
 					},
 					"a365ComputeOptions": {
-						"id": "/subscriptions/356cc0b4-92be-42c1-8585-6182d784d5eb/resourceGroups/mdwdops-imdmo-dev-rg/providers/Microsoft.Synapse/workspaces/sywsdevimdmo/bigDataPools/imsparkpool3",
-						"name": "imsparkpool3",
+						"id": "/subscriptions/356cc0b4-92be-42c1-8585-6182d784d5eb/resourceGroups/mdwdops-gbbim-dev-rg/providers/Microsoft.Synapse/workspaces/sywsdevgbbim/bigDataPools/synspdevgbbim",
+						"name": "synspdevgbbim",
 						"type": "Spark",
-						"endpoint": "https://sywsdevimdmo.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/imsparkpool3",
+						"endpoint": "https://sywsdevgbbim.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synspdevgbbim",
 						"auth": {
 							"type": "AAD",
 							"authResource": "https://dev.azuresynapse.net"
 						},
-						"sparkVersion": "3.1",
-						"nodeCount": 4,
-						"cores": 8,
-						"memory": 56
+						"sparkVersion": "2.4",
+						"nodeCount": 10,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
 					},
 					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"# Raw Data Retrieval"
 						]
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Notebook Objective\n",
 							"\n",
@@ -1154,6 +1157,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Step Configuration\n",
 							"\n",
@@ -1167,6 +1171,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"%run Delta/pipelines/includes/configuration"
 						],
@@ -1175,6 +1180,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Introduction to Microsoft Spark Utilities"
 						]
@@ -1200,6 +1206,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"mssparkutils.fs.rm(rawPath, recurse=True)"
 						],
@@ -1208,6 +1215,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Retrieve First Month of Data\n",
 							"\n",
@@ -1298,6 +1306,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"retrieve_data(2020, 1, rawPath)"
 						],
@@ -1325,6 +1334,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Expected File\n",
 							"\n",
@@ -1333,6 +1343,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"file_2020_1 = \"health_tracker_data_2020_1.json\""
 						],
@@ -1341,12 +1352,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Display the Files in the Raw Path"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"display(dbutils.fs.ls(rawPath))"
 						],
@@ -1355,6 +1368,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"**Exercise:** Write an Assertion Statement to Verify File Ingestion\n",
 							"\n",
@@ -1363,6 +1377,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# ANSWER\n",
 							"assert file_2020_1 in [\n",
@@ -1376,6 +1391,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"%md-sandbox\n",
 							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
@@ -1752,7 +1768,7 @@
 						"spark.dynamicAllocation.enabled": "false",
 						"spark.dynamicAllocation.minExecutors": "2",
 						"spark.dynamicAllocation.maxExecutors": "2",
-						"spark.autotune.trackingId": "d512a90e-29a0-463c-8f69-1c5e1cd0e522"
+						"spark.autotune.trackingId": "f215884b-2595-4c8d-94da-ba00c07f9e08"
 					}
 				},
 				"metadata": {
@@ -1770,6 +1786,7 @@
 				"cells": [
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"\n",
 							"%md-sandbox\n",
@@ -1783,12 +1800,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"# Raw to Bronze Pattern"
 						]
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Notebook Objective\n",
 							"\n",
@@ -1800,12 +1819,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Step Configuration"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"%run ./includes/configuration"
 						],
@@ -1814,12 +1835,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Display the Files in the Raw Path"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"display(dbutils.fs.ls(rawPath))"
 						],
@@ -1828,12 +1851,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Make Notebook Idempotent"
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"dbutils.fs.rm(bronzePath, recurse=True)\n",
 							"dbutils.fs.rm(bronzeCheckpoint, recurse=True)"
@@ -1843,6 +1868,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Ingest raw data\n",
 							"\n",
@@ -1851,6 +1877,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"kafka_schema = \"value STRING\"\n",
 							"\n",
@@ -1863,6 +1890,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"**Exercise:** Write an Assertion Statement to Verify the Schema of the Raw Data\n",
 							"\n",
@@ -1875,6 +1903,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# ANSWER\n",
 							"from pyspark.sql.types import _parse_datatype_string\n",
@@ -1889,6 +1918,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Display the Raw Data\n",
 							"\n",
@@ -1897,6 +1927,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"display(raw_health_tracker_data_df, streamName=\"display_raw\")"
 						],
@@ -1905,12 +1936,14 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"❗️ To prevent the `display` function from continuously streaming, run the following utility function."
 						]
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"stop_named_stream(spark, \"display_raw\")"
 						],
@@ -1919,6 +1952,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Ingestion Metadata\n",
 							"\n",
@@ -1927,6 +1961,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql.functions import current_timestamp, lit\n",
 							"\n",
@@ -1942,6 +1977,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## WRITE Stream to a Bronze Table\n",
 							"\n",
@@ -1952,6 +1988,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Partitioning\n",
 							"This course uses a dataset that is extremely small relative to an actual production system. Still we demonstrate the best practice of partitioning by date and partition on the ingestion date, column `p_ingestdate`.\n",
@@ -1961,6 +1998,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from pyspark.sql.functions import col\n",
 							"\n",
@@ -1981,6 +2019,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Checkpointing\n",
 							"\n",
@@ -1999,6 +2038,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Create a Reference to the Delta table files\n",
 							"\n",
@@ -2007,6 +2047,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# ANSWER\n",
 							"\n",
@@ -2017,6 +2058,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"bronze_health_tracker = spark.readStream.format(\"delta\").load(bronzePath)"
 						],
@@ -2025,6 +2067,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"### Troubleshooting\n",
 							"\n",
@@ -2038,6 +2081,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Display the files in the Delta table\n",
 							"\n",
@@ -2046,6 +2090,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"display(dbutils.fs.ls(bronzePath))"
 						],
@@ -2054,6 +2099,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"**Exercise:** Write an Assertion Statement to Verify the Schema of the Bronze Delta Table\n",
 							"\n",
@@ -2066,6 +2112,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"# ANSWER\n",
 							"assert bronze_health_tracker.schema == _parse_datatype_string(\n",
@@ -2078,6 +2125,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Display Running Streams\n",
 							"\n",
@@ -2086,6 +2134,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"for stream in spark.streams.active:\n",
 							"    print(stream.name)"
@@ -2095,6 +2144,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Register the Bronze Table in the Metastore\n",
 							"\n",
@@ -2109,6 +2159,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"spark.sql(\n",
 							"    \"\"\"\n",
@@ -2129,6 +2180,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"display(\n",
 							"    spark.sql(\n",
@@ -2143,6 +2195,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Delta Lake Python API\n",
 							"Delta Lake provides programmatic APIs to examine and manipulate Delta tables.\n",
@@ -2152,6 +2205,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"from delta.tables import DeltaTable\n",
 							"\n",
@@ -2162,6 +2216,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"display(bronzeTable.history())"
 						],
@@ -2170,6 +2225,7 @@
 					},
 					{
 						"cell_type": "markdown",
+						"metadata": {},
 						"source": [
 							"## Stop All Streams\n",
 							"\n",
@@ -2180,6 +2236,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"stop_all_streams()\n",
 							""
@@ -2189,6 +2246,7 @@
 					},
 					{
 						"cell_type": "code",
+						"metadata": {},
 						"source": [
 							"%md-sandbox\n",
 							"&copy; 2020 Databricks, Inc. All rights reserved.<br/>\n",
@@ -8202,22 +8260,22 @@
 				"nodeSizeFamily": "MemoryOptimized",
 				"sparkVersion": "2.4",
 				"libraryRequirements": {
-					"content": "opencensus==0.7.13\r\n",
-					"filename": "requirements.txt",
-					"time": "2022-04-04T21:51:59.3116028Z"
+					"content": "opencensus==0.7.13\n",
+					"filename": "/home/vsts/work/1/ciartifacts/synapse_pool_requirements/requirements.txt",
+					"time": "2022-04-07T21:47:49.7683539Z"
 				},
 				"isComputeIsolationEnabled": false,
 				"sparkConfigProperties": {
 					"configurationType": "File",
 					"filename": "spark_loganalytics_conf.txt",
 					"content": "spark.synapse.logAnalytics.enabled true\r\nspark.synapse.logAnalytics.workspaceId ce942865-02ee-4f0e-9a1f-9fa64757ab47\r\nspark.synapse.logAnalytics.secret maymV69SQ4WsdrwrL6bGpxNIIjoR3Eb3NmTXhTD4xj+lc5WDm1H2kDndrAFYj/gtThTith5Hu8evI9/SghzdfQ==",
-					"time": "2022-04-04T21:51:59.3116028Z"
+					"time": "2022-04-07T21:47:49.7683539Z"
 				},
 				"sessionLevelPackagesEnabled": true,
 				"customLibraries": [
 					{
-						"name": "ddo_transform-localdev-py2.py3-none-any.whl",
-						"path": "sywsdevgbbim/libraries/ddo_transform-localdev-py2.py3-none-any.whl",
+						"name": "ddo_transform-1.1.272-py2.py3-none-any.whl",
+						"path": "sywsdevgbbim/libraries/ddo_transform-1.1.272-py2.py3-none-any.whl",
 						"containerName": "prep",
 						"uploadedTimestamp": "0001-01-01T00:00:00+00:00",
 						"type": "whl"

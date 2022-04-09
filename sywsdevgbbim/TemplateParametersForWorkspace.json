@@ -67,7 +67,7 @@
 			"value": "https://mdwdopsst2devimops.dfs.core.windows.net"
 		},
 		"00_ingest_raw_properties_bigDataPool_referenceName": {
-			"value": "imsparkpool3"
+			"value": "synspdevgbbim"
 		},
 		"00_setup_properties_bigDataPool_referenceName": {
 			"value": "synspdevgbbim"
