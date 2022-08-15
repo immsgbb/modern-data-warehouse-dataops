@@ -57,7 +57,7 @@ az group create --name "$resource_group_name" --location "$AZURE_LOCATION" --tag
 
 # By default, set all KeyVault permission to deployer
 # Retrieve KeyVault User Id
-kv_owner_object_id=$(az ad signed-in-user show --output json | jq -r '.objectId')
+kv_owner_object_id=$(az ad signed-in-user show --output json | jq -r '.id')
 
 
 # Validate arm template
@@ -125,10 +125,10 @@ az storage fs directory create -n '/data/dw/dim_parking_bay' -f $storage_file_sy
 az storage fs directory create -n '/data/dw/dim_location' -f $storage_file_system --account-name "$azure_storage_account" --account-key "$azure_storage_key"
 
 echo "Uploading seed data to data/seed"
-az storage blob upload --container-name $storage_file_system --account-name "$azure_storage_account" --account-key "$azure_storage_key" \
-    --file data/seed/dim_date.csv --name "data/seed/dim_date/dim_date.csv"
-az storage blob upload --container-name $storage_file_system --account-name "$azure_storage_account" --account-key "$azure_storage_key" \
-    --file data/seed/dim_time.csv --name "data/seed/dim_time/dim_time.csv"
+# az storage blob upload --container-name $storage_file_system --account-name "$azure_storage_account" --account-key "$azure_storage_key" \
+#     --file data/seed/dim_date.csv --name "data/seed/dim_date/dim_date.csv"
+# az storage blob upload --container-name $storage_file_system --account-name "$azure_storage_account" --account-key "$azure_storage_key" \
+#     --file data/seed/dim_time.csv --name "data/seed/dim_time/dim_time.csv"
 
 # Set Keyvault secrets
 az keyvault secret set --vault-name "$kv_name" --name "datalakeAccountName" --value "$azure_storage_account"
@@ -238,7 +238,9 @@ SYNAPSE_ANALYTICS_SQL_ADMIN=$synapse_sqlpool_admin_username \
 
 # Grant Synapse Administrator to this SP so that it can trigger Synapse pipelines
 wait_service_principal_creation "$sp_synapse_id"
-sp_synapse_object_id=$(az ad sp show --id "$sp_synapse_id" --query "objectId" -o tsv)
+echo "sp creation done"
+sp_synapse_object_id=$(az ad sp show --id "$sp_synapse_id" --query "id" -o tsv)
+echo $sp_synapse_object_id
 assign_synapse_role_if_not_exists "$synapseworkspace_name" "Synapse Administrator" "$sp_synapse_object_id"
 assign_synapse_role_if_not_exists "$synapseworkspace_name" "Synapse SQL Administrator" "$sp_synapse_object_id"
 
