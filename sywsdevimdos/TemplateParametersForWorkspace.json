@@ -1,0 +1,58 @@
+{
+	"$schema": "https://schema.management.azure.com/schemas/2015-01-01/deploymentParameters.json#",
+	"contentVersion": "1.0.0.0",
+	"parameters": {
+		"workspaceName": {
+			"value": "sywsdevimdos"
+		},
+		"sywsdevimdos-WorkspaceDefaultSqlServer_connectionString": {
+			"value": ""
+		},
+		"P_Ingest_MelbParkingData_properties_5_sqlPool_referenceName": {
+			"value": "syndpdevimdos"
+		},
+		"Ls_AdlsGen2_01_properties_typeProperties_url": {
+			"value": {
+				"type": "AzureKeyVaultSecret",
+				"store": {
+					"referenceName": "Ls_KeyVault_01",
+					"type": "LinkedServiceReference"
+				},
+				"secretName": "datalakeurl"
+			}
+		},
+		"Ls_KeyVault_01_properties_typeProperties_baseUrl": {
+			"value": "https://mdwdops-kv-dev-imdos.vault.azure.net/"
+		},
+		"Ls_Rest_MelParkSensors_01_properties_typeProperties_url": {
+			"value": "https://data.melbourne.vic.gov.au/resource/"
+		},
+		"Ls_Rest_MelParkSensors_01_properties_typeProperties_enableServerCertificateValidation": {
+			"value": true
+		},
+		"Ls_Rest_MelParkSensors_01_properties_typeProperties_authenticationType": {
+			"value": "Anonymous"
+		},
+		"sywsdevimdos-WorkspaceDefaultSqlServer_properties_typeProperties_connectionString": {
+			"value": ""
+		},
+		"sywsdevimdos-WorkspaceDefaultStorage_properties_typeProperties_url": {
+			"value": "https://mdwdopsst2devimdos.dfs.core.windows.net"
+		},
+		"00_setup_properties_bigDataPool_referenceName": {
+			"value": "synspdevimdos"
+		},
+		"01a_explore_properties_bigDataPool_referenceName": {
+			"value": "synspdevimdos"
+		},
+		"01b_explore_sqlserverless_properties_bigDataPool_referenceName": {
+			"value": "synspdevimdos"
+		},
+		"02_standardize_properties_bigDataPool_referenceName": {
+			"value": "synspdevimdos"
+		},
+		"03_transform_properties_bigDataPool_referenceName": {
+			"value": "synspdevimdos"
+		}
+	}
+}
