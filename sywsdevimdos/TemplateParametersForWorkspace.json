@@ -6,7 +6,7 @@
 			"value": "sywsdevimdos"
 		},
 		"sywsdevimdos-WorkspaceDefaultSqlServer_connectionString": {
-			"value": ""
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:sywsdevimdos.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
 		"P_Ingest_MelbParkingData_properties_5_sqlPool_referenceName": {
 			"value": "syndpdevimdos"
@@ -34,13 +34,10 @@
 			"value": "Anonymous"
 		},
 		"sywsdevimdos-WorkspaceDefaultSqlServer_properties_typeProperties_connectionString": {
-			"value": ""
+			"value": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:sywsdevimdos.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
 		"sywsdevimdos-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"value": "https://mdwdopsst2devimdos.dfs.core.windows.net"
-		},
-		"00_setup_properties_bigDataPool_referenceName": {
-			"value": "synspdevimdos"
 		},
 		"01a_explore_properties_bigDataPool_referenceName": {
 			"value": "synspdevimdos"

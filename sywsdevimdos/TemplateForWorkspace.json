@@ -9,7 +9,8 @@
 		},
 		"sywsdevimdos-WorkspaceDefaultSqlServer_connectionString": {
 			"type": "secureString",
-			"metadata": "Secure string for 'connectionString' of 'sywsdevimdos-WorkspaceDefaultSqlServer'"
+			"metadata": "Secure string for 'connectionString' of 'sywsdevimdos-WorkspaceDefaultSqlServer'",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:sywsdevimdos.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
 		"P_Ingest_MelbParkingData_properties_5_sqlPool_referenceName": {
 			"type": "string",
@@ -43,15 +44,12 @@
 			"defaultValue": "Anonymous"
 		},
 		"sywsdevimdos-WorkspaceDefaultSqlServer_properties_typeProperties_connectionString": {
-			"type": "string"
+			"type": "string",
+			"defaultValue": "Integrated Security=False;Encrypt=True;Connection Timeout=30;Data Source=tcp:sywsdevimdos.sql.azuresynapse.net,1433;Initial Catalog=@{linkedService().DBName}"
 		},
 		"sywsdevimdos-WorkspaceDefaultStorage_properties_typeProperties_url": {
 			"type": "string",
 			"defaultValue": "https://mdwdopsst2devimdos.dfs.core.windows.net"
-		},
-		"00_setup_properties_bigDataPool_referenceName": {
-			"type": "string",
-			"defaultValue": "synspdevimdos"
 		},
 		"01a_explore_properties_bigDataPool_referenceName": {
 			"type": "string",
@@ -82,6 +80,7 @@
 				"activities": [
 					{
 						"name": "Set infilefolder",
+						"description": "demo 1",
 						"type": "SetVariable",
 						"dependsOn": [],
 						"userProperties": [],
@@ -269,7 +268,13 @@
 									"value": "Ls_AdlsGen2_01",
 									"type": "string"
 								}
-							}
+							},
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
 						}
 					},
 					{
@@ -315,7 +320,13 @@
 									"value": "Ls_KeyVault_01",
 									"type": "string"
 								}
-							}
+							},
+							"conf": {
+								"spark.dynamicAllocation.enabled": null,
+								"spark.dynamicAllocation.minExecutors": null,
+								"spark.dynamicAllocation.maxExecutors": null
+							},
+							"numExecutors": null
 						}
 					},
 					{
@@ -882,10 +893,6 @@
 			"properties": {
 				"nbformat": 4,
 				"nbformat_minor": 2,
-				"bigDataPool": {
-					"referenceName": "[parameters('00_setup_properties_bigDataPool_referenceName')]",
-					"type": "BigDataPoolReference"
-				},
 				"sessionProperties": {
 					"driverMemory": "28g",
 					"driverCores": 4,
@@ -893,16 +900,24 @@
 					"executorCores": 4,
 					"numExecutors": 2,
 					"runAsWorkspaceSystemIdentity": false,
-					"conf": {}
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "dc422bc9-1bfb-46fe-9a44-f99b798634f2"
+					}
 				},
 				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
 					"kernelspec": {
-						"name": "python3",
-						"display_name": "Synapse PySpark"
+						"name": "synapse_pyspark",
+						"display_name": "python"
 					},
 					"language_info": {
 						"name": "python"
-					}
+					},
+					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
@@ -916,8 +931,7 @@
 						},
 						"source": [
 							"# 1. Get variables"
-						],
-						"attachments": null
+						]
 					},
 					{
 						"cell_type": "code",
@@ -940,7 +954,6 @@
 							"keyvaultlsname = 'Ls_KeyVault_01'\n",
 							"adls2lsname = 'Ls_AdlsGen2_01'"
 						],
-						"attachments": null,
 						"outputs": [],
 						"execution_count": null
 					},
@@ -955,8 +968,7 @@
 						},
 						"source": [
 							"# 2. Linked Services Setup: KV and ADLS Gen2"
-						],
-						"attachments": null
+						]
 					},
 					{
 						"cell_type": "code",
@@ -980,9 +992,9 @@
 							"storage_account = token_library.getSecretWithLS(keyvaultlsname, \"datalakeaccountname\")\n",
 							"\n",
 							"spark.conf.set(\"spark.storage.synapse.linkedServiceName\", adls2lsname)\n",
-							"spark.conf.set(\"fs.azure.account.oauth.provider.type\", \"com.microsoft.azure.synapse.tokenlibrary.LinkedServiceBasedTokenProvider\")\n"
+							"spark.conf.set(\"fs.azure.account.oauth.provider.type\", \"com.microsoft.azure.synapse.tokenlibrary.LinkedServiceBasedTokenProvider\")\n",
+							""
 						],
-						"attachments": null,
 						"outputs": [],
 						"execution_count": null
 					},
@@ -997,8 +1009,7 @@
 						},
 						"source": [
 							"# 3. Create Schemas"
-						],
-						"attachments": null
+						]
 					},
 					{
 						"cell_type": "code",
@@ -1020,7 +1031,6 @@
 							"spark.sql(f\"CREATE SCHEMA IF NOT EXISTS interim LOCATION 'abfss://datalake@{storage_account}.dfs.core.windows.net/data'\")\n",
 							"spark.sql(f\"CREATE SCHEMA IF NOT EXISTS malformed LOCATION 'abfss://datalake@{storage_account}.dfs.core.windows.net/data'\")"
 						],
-						"attachments": null,
 						"outputs": [],
 						"execution_count": null
 					},
@@ -1035,8 +1045,7 @@
 						},
 						"source": [
 							"# 4. Create Fact Tables"
-						],
-						"attachments": null
+						]
 					},
 					{
 						"cell_type": "code",
@@ -1059,7 +1068,6 @@
 							" \n",
 							"spark.sql(f\"REFRESH TABLE dw.fact_parking\")"
 						],
-						"attachments": null,
 						"outputs": [],
 						"execution_count": null
 					},
@@ -1074,8 +1082,7 @@
 						},
 						"source": [
 							"# 5. Create Dimension Tables"
-						],
-						"attachments": null
+						]
 					},
 					{
 						"cell_type": "code",
@@ -1106,7 +1113,6 @@
 							"spark.sql(f\"CREATE TABLE dw.dim_parking_bay(dim_parking_bay_id STRING, bay_id INT,`marker_id` STRING, `meter_id` STRING, `rd_seg_dsc` STRING, `rd_seg_id` STRING, load_id STRING, loaded_on TIMESTAMP) USING parquet LOCATION 'abfss://datalake@{storage_account}.dfs.core.windows.net/data/dw/dim_parking_bay/'\")\n",
 							"spark.sql(f\"REFRESH TABLE dw.dim_parking_bay\")"
 						],
-						"attachments": null,
 						"outputs": [],
 						"execution_count": null
 					},
@@ -1121,8 +1127,7 @@
 						},
 						"source": [
 							"# 6. Create dim date and time"
-						],
-						"attachments": null
+						]
 					},
 					{
 						"cell_type": "code",
@@ -1151,7 +1156,6 @@
 							"dimtime = spark.read.csv(f\"abfss://datalake@{storage_account}.dfs.core.windows.net/data/seed/dim_time/dim_time.csv\", header=True)\n",
 							"dimtime.write.saveAsTable(\"dw.dim_time\")"
 						],
-						"attachments": null,
 						"outputs": [],
 						"execution_count": null
 					},
@@ -1166,8 +1170,7 @@
 						},
 						"source": [
 							"# 7. Create interim and error tables"
-						],
-						"attachments": null
+						]
 					},
 					{
 						"cell_type": "code",
@@ -1201,7 +1204,6 @@
 							"spark.sql(f\"CREATE TABLE malformed.sensor(bay_id INT,`st_marker_id` STRING,`lat` FLOAT,`lon` FLOAT,`location` STRUCT<`coordinates`: ARRAY<DOUBLE>, `type`: STRING>,`status` STRING, load_id STRING, loaded_on TIMESTAMP) USING parquet LOCATION 'abfss://datalake@{storage_account}.dfs.core.windows.net/data/malformed/malformed.parking_bay/'\")\n",
 							"spark.sql(f\"REFRESH TABLE malformed.sensor\")"
 						],
-						"attachments": null,
 						"outputs": [],
 						"execution_count": null
 					}
@@ -1227,16 +1229,39 @@
 					"executorCores": 4,
 					"numExecutors": 2,
 					"runAsWorkspaceSystemIdentity": false,
-					"conf": {}
+					"conf": {
+						"spark.dynamicAllocation.enabled": "false",
+						"spark.dynamicAllocation.minExecutors": "2",
+						"spark.dynamicAllocation.maxExecutors": "2",
+						"spark.autotune.trackingId": "f75c03a7-aad5-4be3-b143-ed366291c73a"
+					}
 				},
 				"metadata": {
+					"saveOutput": true,
+					"enableDebugMode": false,
 					"kernelspec": {
 						"name": "synapse_pyspark",
 						"display_name": "Synapse PySpark"
 					},
 					"language_info": {
 						"name": "python"
-					}
+					},
+					"a365ComputeOptions": {
+						"id": "/subscriptions/356cc0b4-92be-42c1-8585-6182d784d5eb/resourceGroups/mdwdops-imdos-dev-rg/providers/Microsoft.Synapse/workspaces/sywsdevimdos/bigDataPools/synspdevimdos",
+						"name": "synspdevimdos",
+						"type": "Spark",
+						"endpoint": "https://sywsdevimdos.dev.azuresynapse.net/livyApi/versions/2019-11-01-preview/sparkPools/synspdevimdos",
+						"auth": {
+							"type": "AAD",
+							"authResource": "https://dev.azuresynapse.net"
+						},
+						"sparkVersion": "2.4",
+						"nodeCount": 10,
+						"cores": 4,
+						"memory": 28,
+						"automaticScaleJobs": false
+					},
+					"sessionKeepAliveTimeout": 30
 				},
 				"cells": [
 					{
@@ -1263,9 +1288,9 @@
 							"\n",
 							"display(parkingbay_sdf)\n",
 							"display(sensordata_sdf)\n",
-							"display(sensordata_sdf)\n"
+							"display(sensordata_sdf)\n",
+							""
 						],
-						"attachments": null,
 						"outputs": [],
 						"execution_count": null
 					}
@@ -2169,24 +2194,24 @@
 				"nodeSizeFamily": "MemoryOptimized",
 				"sparkVersion": "2.4",
 				"libraryRequirements": {
-					"content": "opencensus==0.7.13\r\n",
-					"filename": "requirements.txt",
-					"time": "2022-07-24T21:10:12.7300152Z"
+					"content": "opencensus==0.7.13\n",
+					"filename": "/home/vsts/work/1/ciartifacts/synapse_pool_requirements/requirements.txt",
+					"time": "2022-08-17T05:22:49.2626596Z"
 				},
 				"isComputeIsolationEnabled": false,
 				"sparkConfigProperties": {
 					"configurationType": "File",
 					"filename": "spark_loganalytics_conf.txt",
 					"content": "spark.synapse.logAnalytics.enabled true\r\nspark.synapse.logAnalytics.workspaceId 9f1dceec-cb7a-4b04-851a-70de12cd2dbd\r\nspark.synapse.logAnalytics.secret w98RBY8w7OEFNbH4sQkh3zMOQZQEbHj7yHibHVXvOPH7NH1W/V7zH7H7Ac+dFEYEmaf5S5TUucUQntMmOFWxIw==",
-					"time": "2022-07-24T21:10:12.7300152Z"
+					"time": "2022-08-17T05:22:49.2626596Z"
 				},
 				"sessionLevelPackagesEnabled": true,
 				"customLibraries": [
 					{
-						"name": "ddo_transform-localdev-py2.py3-none-any.whl",
-						"path": "sywsdevimdos/libraries/ddo_transform-localdev-py2.py3-none-any.whl",
+						"name": "ddo_transform-1.1.282-py2.py3-none-any.whl",
+						"path": "sywsdevimdos/libraries/ddo_transform-1.1.282-py2.py3-none-any.whl",
 						"containerName": "prep",
-						"uploadedTimestamp": "0001-01-01T00:00:00+00:00",
+						"uploadedTimestamp": "2022-08-17T05:13:02.542343+00:00",
 						"type": "whl"
 					}
 				],
