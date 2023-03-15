@@ -4,6 +4,7 @@
 		"activities": [
 			{
 				"name": "Set infilefolder",
+				"description": "demo 1",
 				"type": "SetVariable",
 				"dependsOn": [],
 				"userProperties": [],
@@ -191,7 +192,13 @@
 							"value": "Ls_AdlsGen2_01",
 							"type": "string"
 						}
-					}
+					},
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
 				}
 			},
 			{
@@ -237,7 +244,13 @@
 							"value": "Ls_KeyVault_01",
 							"type": "string"
 						}
-					}
+					},
+					"conf": {
+						"spark.dynamicAllocation.enabled": null,
+						"spark.dynamicAllocation.minExecutors": null,
+						"spark.dynamicAllocation.maxExecutors": null
+					},
+					"numExecutors": null
 				}
 			},
 			{
